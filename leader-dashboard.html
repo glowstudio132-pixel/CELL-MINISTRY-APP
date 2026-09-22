@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem("ceCampusTheme");
+    var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  } catch (e) {}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard — Cell Ministry App</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="responsive.css">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand-row">
+      <a href="index.html" class="brand">
+        <img src="blw-logo.png" alt="Cell Ministry App" class="brand-logo" /> <span class="brand-text">Cell Ministry</span>
+      </a>
+      <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" aria-label="Collapse sidebar" title="Collapse sidebar">
+        <i data-lucide="panel-left-close"></i>
+      </button>
+    </div>
+    <div class="side-scroll">
+      <div class="side-label">Cell Leader</div>
+      <a href="leader-dashboard.html" class="side-link" title="Dashboard"><i data-lucide="layout-dashboard"></i><span class="link-text">Dashboard</span></a>
+      <a href="leader-cell.html" class="side-link soon" title="My Cell"><i data-lucide="users-round"></i><span class="link-text">My Cell</span></a>
+      <a href="leader-members.html" class="side-link soon" title="Members"><i data-lucide="users"></i><span class="link-text">Members</span></a>
+      <a href="leader-attendance.html" class="side-link soon" title="Attendance"><i data-lucide="clipboard-check"></i><span class="link-text">Attendance</span></a>
+      <a href="leader-offerings.html" class="side-link soon" title="Offerings"><i data-lucide="hand-coins"></i><span class="link-text">Offerings</span></a>
+      <a href="leader-growth.html" class="side-link soon" title="Growth"><i data-lucide="trending-up"></i><span class="link-text">Growth</span></a>
+      <a href="leader-activities.html" class="side-link soon" title="Activities"><i data-lucide="calendar-heart"></i><span class="link-text">Activities</span></a>
+      <a href="leader-reports.html" class="side-link soon" title="Reports"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
+      <div class="side-label">Account</div>
+      <a href="leader-notifications.html" class="side-link soon" title="Notifications"><i data-lucide="bell"></i><span class="link-text">Notifications</span></a>
+      <a href="leader-settings.html" class="side-link soon" title="Settings"><i data-lucide="settings"></i><span class="link-text">Settings</span></a>
+    </div>
+    <div class="side-foot">
+      <a href="#" class="side-link" id="logout-link"><i data-lucide="log-out"></i><span class="link-text">Logout</span></a>
+    </div>
+  </aside>
+  <div class="sidebar-overlay"></div>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="topbar">
+      <div class="u-flex u-center u-gap-16">
+        <button class="menu-toggle" aria-label="Open menu"><span></span><span></span><span></span></button>
+        <div class="topbar-title">
+          <h1 id="greeting">Good morning 👋</h1>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+          <i data-lucide="moon" class="theme-icon-light"></i>
+          <i data-lucide="sun" class="theme-icon-dark"></i>
+        </button>
+        <button class="icon-btn" aria-label="Notifications" onclick="showToast('You have 2 unread notifications.', 'success')">
+          <i data-lucide="bell"></i><span class="notif-dot"></span>
+        </button>
+        <div id="profile-menu-slot"></div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <div class="tip-card"><i data-lucide="lightbulb"></i> <span class="tip-text" id="tip-text">Let's check your cell attendance.</span></div>
+
+      <div id="no-cell-banner" class="card" style="display:none; padding:20px 24px; margin-bottom:24px; border-color:var(--violet-500);">
+        <div class="u-flex u-center u-gap-16" style="flex-wrap:wrap;">
+          <div class="summary-icon tone-royal" style="flex-shrink:0;"><i data-lucide="info"></i></div>
+          <div style="flex:1; min-width:200px;">
+            <h3 style="font-size:15px; margin-bottom:4px;">No cell linked to your account yet</h3>
+            <p style="font-size:13.5px;">Once your cell is set up, your attendance, offerings and member stats will appear here.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-grid" id="summary-grid"></div>
+
+      <div class="panel-grid-2">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Attendance trend</h3>
+          </div>
+          <div style="height:240px;" id="attendance-chart-wrap">
+            <canvas id="attendance-trend"></canvas>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Quick actions</h3>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <button class="btn btn-secondary btn-block" style="justify-content:flex-start;" onclick="goTo('leader-members.html')">
+              <i data-lucide="user-plus" class="btn-add-icon"></i> Add Member
+            </button>
+            <button class="btn btn-secondary btn-block" style="justify-content:flex-start;" onclick="goTo('leader-attendance.html')">
+              <i data-lucide="clipboard-check"></i> Take Attendance
+            </button>
+            <button class="btn btn-secondary btn-block" style="justify-content:flex-start;" onclick="goTo('leader-offerings.html')">
+              <i data-lucide="hand-coins"></i> Record Offering
+            </button>
+            <button class="btn btn-secondary btn-block" style="justify-content:flex-start;" onclick="goTo('leader-activities.html')">
+              <i data-lucide="calendar-heart" class="btn-add-icon"></i> Add Activity
+            </button>
+            <button class="btn btn-secondary btn-block" style="justify-content:flex-start;" onclick="goTo('leader-reports.html')">
+              <i data-lucide="file-text"></i> Submit Report
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Recent activities</h3>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Activity</th><th>Category</th><th>Date</th><th>Participants</th></tr>
+            </thead>
+            <tbody id="activities-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="leader-dashboard.html" class="bn-item active"><i data-lucide="layout-dashboard"></i><span class="link-text">Home</span></a>
+    <a href="leader-cell.html" class="bn-item soon"><i data-lucide="users-round"></i><span class="link-text">Cell</span></a>
+    <a href="leader-attendance.html" class="bn-item soon"><i data-lucide="clipboard-check"></i><span class="link-text">Attend</span></a>
+    <a href="leader-reports.html" class="bn-item soon"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
+    <a href="#" class="bn-item" id="bn-logout"><i data-lucide="log-out"></i> Logout</a>
+  </div>
+</nav>
+
+<script src="utils.js"></script>
+<script src="theme.js"></script>
+<script src="auth.js"></script>
+<script src="data.js"></script>
+<script src="components.js"></script>
+<script src="charts.js"></script>
+<script>
+  const session = requireRole("cell_leader");
+
+  function goTo(page) { window.location.href = page; }
+
+  const TIPS = [
+    "Let's check your cell attendance.",
+    "Don't forget to submit this week's report.",
+    "Let's keep your cell growth moving.",
+    "A quick outreach activity keeps momentum going."
+  ];
+
+  function rotateTips() {
+    const el = document.getElementById("tip-text");
+    let i = 0;
+    setInterval(() => {
+      el.classList.add("fading");
+      setTimeout(() => {
+        i = (i + 1) % TIPS.length;
+        el.textContent = TIPS[i];
+        el.classList.remove("fading");
+      }, 250);
+    }, 6000);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!session) return;
+
+    document.getElementById("greeting").textContent = "Good morning, " + session.name.split(" ")[0] + " 👋";
+    initProfileMenu("profile-menu-slot", session);
+    rotateTips();
+
+    function goLogout() { confirmAction("Are you sure you want to end your current session?", logout, { title: "Sign out?", confirmLabel: "Sign Out" }); }
+    document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
+    document.getElementById("bn-logout").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
+
+    document.querySelectorAll(".side-link.soon, .bn-item.soon").forEach(link => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        showToast("This section isn't available yet.", "success");
+      });
+    });
+
+    const cellId = session.cellId || null;
+
+    if (!cellId) {
+      document.getElementById("no-cell-banner").style.display = "block";
+    }
+
+    const strength = cellId ? getCellStrength(cellId) : 0;
+    const latest = cellId ? getLatestAttendance(cellId) : null;
+    const rate = cellId ? getAttendanceRate(cellId) : 0;
+    const latestOffering = cellId ? getOfferings(cellId)[0] : null;
+    const activityCount = cellId ? getActivities(cellId).length : 0;
+
+    const cards = [
+      { icon: "users-round", tone: "royal", value: strength, label: "Cell Strength" },
+      { icon: "clipboard-check", tone: "success", value: latest ? latest.present : 0, label: "This Week's Attendance" },
+      { icon: "trending-up", tone: "royal", value: rate + "%", label: "Attendance Rate" },
+      { icon: "hand-coins", tone: "gold", value: latestOffering ? formatNaira(latestOffering.amount) : formatNaira(0), label: "Offering This Week" },
+      { icon: "calendar-heart", tone: "success", value: activityCount, label: "Activities" }
+    ];
+
+    document.getElementById("summary-grid").innerHTML = cards.map(c => `
+      <div class="card summary-card">
+        <div class="summary-top">
+          <div class="summary-icon tone-${c.tone}"><i data-lucide="${c.icon}"></i></div>
+        </div>
+        <div class="summary-value">${c.value}</div>
+        <div class="summary-label">${c.label}</div>
+      </div>
+    `).join("");
+
+    const history = cellId ? getAttendance(cellId).slice(0, 6).reverse() : [];
+    if (history.length) {
+      renderLineChart(
+        "attendance-trend",
+        history.map(h => formatDate(h.date, { day: "numeric", month: "short" })),
+        history.map(h => h.present),
+        { label: "Present" }
+      );
+    } else {
+      document.getElementById("attendance-chart-wrap").innerHTML = `<div class="empty-state"><h4>No attendance recorded yet</h4><p>Once you take attendance, the trend will appear here.</p></div>`;
+    }
+
+    const activitiesBody = document.getElementById("activities-body");
+    const activities = cellId ? getActivities(cellId) : [];
+    if (activities.length) {
+      activitiesBody.innerHTML = activities.map(a => `
+        <tr>
+          <td style="font-weight:600; color:var(--ink-900);">${a.name}</td>
+          <td>${a.category}</td>
+          <td>${formatDate(a.date)}</td>
+          <td>${a.participants}</td>
+        </tr>
+      `).join("");
+    } else {
+      activitiesBody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><h4>No activities recorded yet</h4><p>Activities you log will show up here.</p></div></td></tr>`;
+    }
+
+    lucide.createIcons();
+  });
+</script>
+</body>
+</html>

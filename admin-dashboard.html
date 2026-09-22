@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem("ceCampusTheme");
+    var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  } catch (e) {}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin Dashboard — Cell Ministry App</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="responsive.css">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand-row">
+      <a href="index.html" class="brand">
+        <img src="blw-logo.png" alt="Cell Ministry App" class="brand-logo" /> <span class="brand-text">Cell Ministry</span>
+      </a>
+      <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" aria-label="Collapse sidebar" title="Collapse sidebar">
+        <i data-lucide="panel-left-close"></i>
+      </button>
+    </div>
+    <div class="side-scroll">
+      <div class="side-label">Administration</div>
+      <a href="admin-dashboard.html" class="side-link" title="Dashboard"><i data-lucide="layout-dashboard"></i><span class="link-text">Dashboard</span></a>
+      <a href="admin-groups.html" class="side-link" title="Groups"><i data-lucide="network"></i><span class="link-text">Groups</span></a>
+      <a href="admin-cells.html" class="side-link soon" title="Cells"><i data-lucide="users-round"></i><span class="link-text">Cells</span></a>
+      <a href="admin-leaders.html" class="side-link soon" title="Cell Leaders"><i data-lucide="user-check"></i><span class="link-text">Cell Leaders</span></a>
+      <a href="admin-members.html" class="side-link soon" title="Members"><i data-lucide="users"></i><span class="link-text">Members</span></a>
+      <a href="admin-attendance.html" class="side-link soon" title="Attendance"><i data-lucide="clipboard-check"></i><span class="link-text">Attendance</span></a>
+      <a href="admin-offerings.html" class="side-link soon" title="Offerings"><i data-lucide="hand-coins"></i><span class="link-text">Offerings</span></a>
+      <a href="admin-growth.html" class="side-link soon" title="Growth"><i data-lucide="trending-up"></i><span class="link-text">Growth</span></a>
+      <a href="admin-activities.html" class="side-link soon" title="Activities"><i data-lucide="calendar-heart"></i><span class="link-text">Activities</span></a>
+      <a href="admin-reports.html" class="side-link soon" title="Reports"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
+      <a href="admin-analytics.html" class="side-link soon" title="Analytics"><i data-lucide="bar-chart-3"></i><span class="link-text">Analytics</span></a>
+      <div class="side-label">Account</div>
+      <a href="admin-notifications.html" class="side-link soon" title="Notifications"><i data-lucide="bell"></i><span class="link-text">Notifications</span></a>
+      <a href="admin-settings.html" class="side-link soon" title="Settings"><i data-lucide="settings"></i><span class="link-text">Settings</span></a>
+    </div>
+    <div class="side-foot">
+      <a href="#" class="side-link" id="logout-link"><i data-lucide="log-out"></i><span class="link-text">Logout</span></a>
+    </div>
+  </aside>
+  <div class="sidebar-overlay"></div>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="topbar">
+      <div class="u-flex u-center u-gap-16">
+        <button class="menu-toggle" aria-label="Open menu"><span></span><span></span><span></span></button>
+        <div class="topbar-title">
+          <h1 id="greeting">Good morning, Admin 👋</h1>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+          <i data-lucide="moon" class="theme-icon-light"></i>
+          <i data-lucide="sun" class="theme-icon-dark"></i>
+        </button>
+        <button class="icon-btn" aria-label="Notifications" onclick="showToast('You have 3 unread notifications.', 'success')">
+          <i data-lucide="bell"></i><span class="notif-dot"></span>
+        </button>
+        <div id="profile-menu-slot"></div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <div class="tip-card"><i data-lucide="lightbulb"></i> <span class="tip-text" id="tip-text">Let's see what's happening across your groups and cells today.</span></div>
+
+      <div class="summary-grid" id="summary-grid"></div>
+      <div class="summary-grid" id="summary-grid-secondary" style="margin-top:-12px;"></div>
+
+      <div class="panel-grid-2">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Cells by chapter</h3>
+          </div>
+          <div style="height:240px;" id="chapter-chart-wrap">
+            <canvas id="cells-by-chapter"></canvas>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Cell status distribution</h3>
+          </div>
+          <div style="height:240px;" id="status-chart-wrap">
+            <canvas id="cell-status-donut"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Cells needing attention</h3>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Cell</th><th>Leader</th><th>Chapter</th><th>Group</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="attention-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="admin-dashboard.html" class="bn-item active"><i data-lucide="layout-dashboard"></i><span class="link-text">Home</span></a>
+    <a href="admin-groups.html" class="bn-item"><i data-lucide="network"></i><span class="link-text">Groups</span></a>
+    <a href="admin-reports.html" class="bn-item soon"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
+    <a href="admin-analytics.html" class="bn-item soon"><i data-lucide="bar-chart-3"></i><span class="link-text">Analytics</span></a>
+    <a href="#" class="bn-item" id="bn-logout"><i data-lucide="log-out"></i> Logout</a>
+  </div>
+</nav>
+
+<script src="utils.js"></script>
+<script src="theme.js"></script>
+<script src="auth.js"></script>
+<script src="data.js"></script>
+<script src="components.js"></script>
+<script src="charts.js"></script>
+<script>
+  const session = requireRole("administrator");
+
+  const TIPS = [
+    "Let's see what's happening across your groups and cells today.",
+    "Chapters with no cells yet are a good place to start.",
+    "Reporting compliance improves when reminders go out on time.",
+    "Check in on chapters with the lowest attendance this week."
+  ];
+
+  function rotateTips() {
+    const el = document.getElementById("tip-text");
+    let i = 0;
+    setInterval(() => {
+      el.classList.add("fading");
+      setTimeout(() => {
+        i = (i + 1) % TIPS.length;
+        el.textContent = TIPS[i];
+        el.classList.remove("fading");
+      }, 250);
+    }, 6000);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!session) return;
+
+    initProfileMenu("profile-menu-slot", session);
+    rotateTips();
+
+    function goLogout() { confirmAction("Are you sure you want to end your current session?", logout, { title: "Sign out?", confirmLabel: "Sign Out" }); }
+    document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
+    document.getElementById("bn-logout").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
+
+    document.querySelectorAll(".side-link.soon, .bn-item.soon").forEach(link => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        showToast("This section isn't available yet.", "success");
+      });
+    });
+
+    // ---------- Aggregate ministry-wide stats ----------
+    const groups = getGroups();
+    const chapters = getChapters();
+    const cells = getCells();
+    const leaders = getLeaders();
+    const members = getMembers().filter(m => m.status === "Active");
+    const offerings = getOfferings();
+    const totalOffering = offerings.reduce((sum, o) => sum + o.amount, 0);
+    const activeCells = cells.filter(c => c.status === "Active").length;
+    const reportsSubmitted = getReports().filter(r => r.status === "Submitted" || r.status === "Reviewed").length;
+
+    const cellsWithAttendance = cells.filter(c => getLatestAttendance(c.id));
+    const avgAttendance = cellsWithAttendance.length
+      ? Math.round(cellsWithAttendance.reduce((sum, c) => sum + getAttendanceRate(c.id), 0) / cellsWithAttendance.length * 10) / 10
+      : 0;
+
+    const primaryCards = [
+      { icon: "users-round", tone: "royal", value: cells.length, label: "Total Cells" },
+      { icon: "user-check", tone: "royal", value: leaders.length, label: "Total Leaders" },
+      { icon: "users", tone: "success", value: members.length, label: "Total Members" },
+      { icon: "trending-up", tone: "success", value: avgAttendance + "%", label: "Average Attendance" },
+      { icon: "hand-coins", tone: "gold", value: formatNaira(totalOffering), label: "Total Offering" }
+    ];
+    const secondaryCards = [
+      { icon: "network", tone: "royal", value: groups.length, label: "Total Groups" },
+      { icon: "building-2", tone: "royal", value: chapters.length, label: "Total Chapters" },
+      { icon: "file-text", tone: "success", value: reportsSubmitted, label: "Reports Submitted" }
+    ];
+
+    function renderCards(targetId, cards) {
+      document.getElementById(targetId).innerHTML = cards.map(c => `
+        <div class="card summary-card">
+          <div class="summary-top">
+            <div class="summary-icon tone-${c.tone}"><i data-lucide="${c.icon}"></i></div>
+          </div>
+          <div class="summary-value">${c.value}</div>
+          <div class="summary-label">${c.label}</div>
+        </div>
+      `).join("");
+    }
+    renderCards("summary-grid", primaryCards);
+    renderCards("summary-grid-secondary", secondaryCards);
+
+    // ---------- Cells by chapter ----------
+    if (cells.length) {
+      const chapterLabels = chapters.map(ch => ch.name);
+      const chapterCounts = chapters.map(ch => getCells(ch.id).length);
+      renderBarChart("cells-by-chapter", chapterLabels, chapterCounts, { label: "Cells", color: "#7c6fe0" });
+    } else {
+      document.getElementById("chapter-chart-wrap").innerHTML = `<div class="empty-state"><h4>No cells have been added yet</h4><p>Cell counts by chapter will appear here once cells exist.</p></div>`;
+    }
+
+    // ---------- Cell status distribution ----------
+    if (cells.length) {
+      const statusCounts = {};
+      cells.forEach(c => { statusCounts[c.status] = (statusCounts[c.status] || 0) + 1; });
+      const statusColors = { "Active": "#1c9a6c", "Needs Attention": "#c9962f", "Pending Report": "#7c6fe0", "Inactive": "#d1483f" };
+      renderDonutChart(
+        "cell-status-donut",
+        Object.keys(statusCounts),
+        Object.values(statusCounts),
+        Object.keys(statusCounts).map(k => statusColors[k] || "#8b90ab")
+      );
+    } else {
+      document.getElementById("status-chart-wrap").innerHTML = `<div class="empty-state"><h4>No cells have been added yet</h4><p>Status breakdown will appear here once cells exist.</p></div>`;
+    }
+
+    // ---------- Cells needing attention ----------
+    const attentionCells = cells.filter(c => c.status !== "Active");
+    const body = document.getElementById("attention-body");
+    if (attentionCells.length) {
+      body.innerHTML = attentionCells.map(c => {
+        const leader = getLeaderById(c.leaderId);
+        const chapter = chapters.find(ch => ch.id === c.chapterId);
+        const group = groups.find(g => g.id === c.groupId);
+        return `
+          <tr>
+            <td style="font-weight:600; color:var(--ink-900);">${c.name}</td>
+            <td>${leader ? leader.name : "—"}</td>
+            <td>${chapter ? chapter.name : "—"}</td>
+            <td>${group ? group.name : "—"}</td>
+            <td><span class="badge badge-dot ${statusBadgeClass(c.status)}">${c.status}</span></td>
+            <td><button class="btn btn-secondary btn-sm" onclick="showToast('Cell detail view isn\\'t available yet.', 'success')">View</button></td>
+          </tr>`;
+      }).join("");
+    } else if (cells.length === 0) {
+      body.innerHTML = `<tr><td colspan="6"><div class="empty-state"><h4>No cells have been added yet</h4><p>Add cells under a chapter to start monitoring them here.</p><a href="admin-groups.html" class="btn btn-primary btn-sm" style="margin-top:14px;">Go to Groups</a></div></td></tr>`;
+    } else {
+      body.innerHTML = `<tr><td colspan="6"><div class="empty-state">No cells currently need attention.</div></td></tr>`;
+    }
+
+    lucide.createIcons();
+  });
+</script>
+</body>
+</html>

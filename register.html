@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem("ceCampusTheme");
+    var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  } catch (e) {}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Create Account — Cell Ministry App</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="responsive.css">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+
+<div class="auth-page">
+  <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" style="position:absolute; top:24px; right:24px; z-index:2;">
+    <i data-lucide="moon" class="theme-icon-light"></i>
+    <i data-lucide="sun" class="theme-icon-dark"></i>
+  </button>
+
+  <div class="auth-card-wrap" style="max-width:440px;">
+    <div class="auth-top">
+      <div class="auth-icon"><img src="blw-logo.png" alt="Cell Ministry App" /></div>
+      <h1>Create your account</h1>
+      <p>Set up access to your Cell Ministry workspace.</p>
+    </div>
+
+    <div class="card auth-card" style="padding:28px;">
+      <div class="role-select-row" role="tablist" aria-label="Select account type">
+        <button class="role-option active" data-role="cell_leader" role="tab" aria-selected="true">
+          <i data-lucide="user-round"></i> Cell Leader
+        </button>
+        <button class="role-option" data-role="administrator" role="tab" aria-selected="false">
+          <i data-lucide="shield-check"></i> Administrator
+        </button>
+      </div>
+
+      <div class="form-error" id="form-error"></div>
+
+      <form id="register-form" novalidate>
+        <div class="field">
+          <label for="name">Full Name</label>
+          <input class="input" type="text" id="name" autocomplete="name" />
+          <span class="field-hint field-error" id="name-error"></span>
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input class="input" type="email" id="email" autocomplete="email" />
+          <span class="field-hint field-error" id="email-error"></span>
+        </div>
+
+        <div id="leader-fields">
+          <div class="field">
+            <label for="group">Group</label>
+            <select class="select" id="group">
+              <option value="">Select a group</option>
+            </select>
+            <span class="field-hint field-error" id="group-error"></span>
+          </div>
+          <div class="field">
+            <label for="chapter">Chapter</label>
+            <select class="select" id="chapter" disabled>
+              <option value="">Select a group first</option>
+            </select>
+            <span class="field-hint field-error" id="chapter-error"></span>
+          </div>
+          <div class="field">
+            <label for="cellName">Cell Name</label>
+            <input class="input" type="text" id="cellName" placeholder="e.g. Grace Cell" />
+            <span class="field-hint field-error" id="cellName-error"></span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="password-field">
+            <input class="input" type="password" id="password" autocomplete="new-password" style="padding-right:42px;" />
+            <button type="button" class="password-toggle" data-target="password" aria-label="Show password"><i data-lucide="eye"></i></button>
+          </div>
+          <span class="field-hint field-error" id="password-error"></span>
+        </div>
+        <div class="field">
+          <label for="confirmPassword">Confirm Password</label>
+          <div class="password-field">
+            <input class="input" type="password" id="confirmPassword" autocomplete="new-password" style="padding-right:42px;" />
+            <button type="button" class="password-toggle" data-target="confirmPassword" aria-label="Show password"><i data-lucide="eye"></i></button>
+          </div>
+          <span class="field-hint field-error" id="confirmPassword-error"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="register-btn" style="margin-top:6px;">
+          <span class="btn-spinner"></span>
+          <i data-lucide="user-plus" class="btn-label-icon"></i>
+          <span class="btn-label-text">Create Account</span>
+        </button>
+      </form>
+
+      <p class="auth-foot">Already have an account? <a href="login.html">Sign in</a></p>
+    </div>
+  </div>
+</div>
+
+<script src="utils.js"></script>
+<script src="theme.js"></script>
+<script src="data.js"></script>
+<script src="auth.js"></script>
+<script>
+  let selectedRole = "cell_leader";
+  const roleButtons = document.querySelectorAll(".role-option");
+  const leaderFields = document.getElementById("leader-fields");
+  const groupSelect = document.getElementById("group");
+  const chapterSelect = document.getElementById("chapter");
+  const formError = document.getElementById("form-error");
+  const registerBtn = document.getElementById("register-btn");
+
+  // Populate groups from the real ministry data.
+  getGroups().forEach(g => {
+    const opt = document.createElement("option");
+    opt.value = g.id;
+    opt.textContent = g.name;
+    groupSelect.appendChild(opt);
+  });
+
+  groupSelect.addEventListener("change", () => {
+    const chapters = getChapters(groupSelect.value);
+    chapterSelect.innerHTML = "";
+    if (!groupSelect.value) {
+      chapterSelect.disabled = true;
+      chapterSelect.innerHTML = '<option value="">Select a group first</option>';
+      return;
+    }
+    chapterSelect.disabled = false;
+    chapterSelect.innerHTML = '<option value="">Select a chapter</option>' +
+      chapters.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+  });
+
+  roleButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      roleButtons.forEach(b => { b.classList.remove("active"); b.setAttribute("aria-selected", "false"); });
+      btn.classList.add("active");
+      btn.setAttribute("aria-selected", "true");
+      selectedRole = btn.getAttribute("data-role");
+      leaderFields.style.display = selectedRole === "cell_leader" ? "" : "none";
+      formError.classList.remove("show");
+    });
+  });
+
+  document.querySelectorAll(".password-toggle").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const input = document.getElementById(btn.getAttribute("data-target"));
+      const show = input.type === "password";
+      input.type = show ? "text" : "password";
+      btn.innerHTML = show ? '<i data-lucide="eye-off"></i>' : '<i data-lucide="eye"></i>';
+      lucide.createIcons();
+    });
+  });
+
+  function setFieldError(id, message) {
+    const el = document.getElementById(id + "-error");
+    if (!el) return false;
+    el.textContent = message;
+    el.style.display = message ? "block" : "none";
+    el.style.color = "var(--danger-600)";
+    return !!message;
+  }
+
+  document.getElementById("register-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    formError.classList.remove("show");
+    ["name", "email", "group", "chapter", "cellName", "password", "confirmPassword"].forEach(id => setFieldError(id, ""));
+
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+
+    let hasError = false;
+    if (!name) hasError = setFieldError("name", "Please enter your full name.") || hasError;
+    if (!email) hasError = setFieldError("email", "Please enter your email.") || hasError;
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) hasError = setFieldError("email", "Please enter a valid email address.") || hasError;
+
+    if (selectedRole === "cell_leader") {
+      if (!groupSelect.value) hasError = setFieldError("group", "Please select a group.") || hasError;
+      if (!chapterSelect.value) hasError = setFieldError("chapter", "Please select a chapter.") || hasError;
+      if (!document.getElementById("cellName").value.trim()) hasError = setFieldError("cellName", "Please enter your cell name.") || hasError;
+    }
+
+    if (!password) hasError = setFieldError("password", "Please enter a password.") || hasError;
+    else if (password.length < 6) hasError = setFieldError("password", "Password must be at least 6 characters.") || hasError;
+    if (confirmPassword !== password) hasError = setFieldError("confirmPassword", "Passwords do not match.") || hasError;
+
+    if (hasError) return;
+
+    const existingDemo = Object.values(DEMO_ACCOUNTS).find(a => a.email.toLowerCase() === email.toLowerCase());
+    const existingRegistered = findRegisteredAccount(email);
+    if (existingDemo || existingRegistered) {
+      formError.textContent = "An account with this email already exists.";
+      formError.classList.add("show");
+      return;
+    }
+
+    registerBtn.classList.add("is-loading");
+    registerBtn.disabled = true;
+    registerBtn.querySelector(".btn-label-text").textContent = "Creating account...";
+
+    setTimeout(() => {
+      const account = {
+        name, email, password, role: selectedRole,
+        group: null, chapter: null, cellName: null, leaderId: null
+      };
+
+      if (selectedRole === "cell_leader") {
+        const chapter = getChapterById(chapterSelect.value);
+        const group = getGroupById(groupSelect.value);
+        const cellNameValue = document.getElementById("cellName").value.trim();
+
+        const cell = addCell({
+          chapterId: chapter.id,
+          groupId: group.id,
+          name: cellNameValue,
+          meetingDay: "",
+          meetingTime: "",
+          location: "",
+          status: "Active"
+        });
+        const leaderRecord = addLeader({ name, email, cellId: cell.id, phone: "" });
+
+        account.group = group.name;
+        account.chapter = chapter.name;
+        account.cellName = cellNameValue;
+        account.leaderId = leaderRecord.id;
+      }
+
+      registerAccount(account);
+
+      registerBtn.querySelector(".btn-label-text").textContent = "Account created successfully.";
+      showToast("Account created successfully.", "success");
+
+      setTimeout(() => {
+        const result = login(selectedRole, email, password, true);
+        if (result.ok) redirectByRole(result.session);
+        else window.location.href = "login.html";
+      }, 700);
+    }, 500);
+  });
+
+  lucide.createIcons();
+</script>
+</body>
+</html>

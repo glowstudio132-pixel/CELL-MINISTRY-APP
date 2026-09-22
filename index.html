@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem("ceCampusTheme");
+    var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  } catch (e) {}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cell Ministry App — Christ Embassy Campus Ministry</title>
+<meta name="description" content="A digital platform for managing cells, members, attendance, activities and growth across Christ Embassy Campus Ministry." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="responsive.css">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand">
+      <img src="blw-logo.png" alt="Cell Ministry App" class="brand-logo" />
+      Cell Ministry
+    </a>
+    <nav class="nav-links">
+      <a href="#home">Home</a>
+      <a href="#about">About</a>
+      <a href="#features">Features</a>
+      <a href="#groups">Groups</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+        <i data-lucide="moon" class="theme-icon-light"></i>
+        <i data-lucide="sun" class="theme-icon-dark"></i>
+      </button>
+      <a href="login.html" class="btn btn-primary btn-sm">Sign In</a>
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+  <div class="mobile-menu">
+    <a href="#home">Home</a>
+    <a href="#about">About</a>
+    <a href="#features">Features</a>
+    <a href="#groups">Groups</a>
+    <a href="#contact">Contact</a>
+    <a href="login.html" class="btn btn-primary btn-sm u-mt-24" style="margin-top:14px;">Sign In</a>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero hero-centered" id="home">
+  <div class="container">
+    <div id="about" class="hero-centered-inner">
+      <div class="hero-accent hero-accent-1"><i data-lucide="heart-handshake"></i></div>
+      <div class="hero-accent hero-accent-2"><i data-lucide="clipboard-check"></i></div>
+      <div class="hero-accent hero-accent-3"><i data-lucide="sparkles"></i></div>
+      <div class="hero-accent hero-accent-4"><i data-lucide="trending-up"></i></div>
+
+      <span class="sticker-badge sticker-yellow">✦ Christ Embassy Campus Ministry</span>
+      <h1 class="hero-mega">Empowering every cell.<br>Tracking every growth.</h1>
+      <p class="hero-sub">A simple digital platform for managing cells, members, attendance, activities and growth across Christ Embassy Campus Ministry.</p>
+      <p class="hero-stat-line">Built for 5 groups and 26 chapters across Christ Embassy Campus Ministry</p>
+      <div class="hero-actions">
+        <a href="login.html" class="btn btn-primary">
+          <i data-lucide="layout-dashboard"></i> Access Dashboard
+        </a>
+        <a href="#features" class="btn btn-secondary">
+          <i data-lucide="compass"></i> Explore Features
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INTRO CARDS ============ -->
+<div class="intro-cards">
+  <div class="intro-card tone-a">
+    <div class="intro-card-icon"><i data-lucide="users-round"></i></div>
+    <h4>Built for real cells</h4>
+    <p>Every group and chapter here is the real ministry structure — nothing invented, nothing generic.</p>
+  </div>
+  <div class="intro-card tone-b">
+    <div class="intro-card-icon"><i data-lucide="trending-up"></i></div>
+    <h4>Growth you can see</h4>
+    <p>Attendance, offerings and member growth roll up automatically, from cell to chapter to group.</p>
+  </div>
+</div>
+
+<!-- ============ PHOTO BAND ============ -->
+<div class="photo-band">
+  <img src="community-cell.jpg" alt="A cell group meeting together" loading="lazy" />
+  <div class="photo-bubble photo-bubble-1">📖 9-person cell</div>
+  <div class="photo-bubble photo-bubble-2">✅ Attendance auto-tracked</div>
+  <div class="photo-band-overlay">
+    <div class="photo-band-caption">This is what a cell meeting looks like — now it's easier to keep track of.</div>
+  </div>
+</div>
+
+<!-- ============ MARQUEE ============ -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track" id="marquee-track"></div>
+</div>
+
+<!-- ============ INSIGHTS ============ -->
+<section class="section">
+  <div class="container">
+    <div class="panel-grid-2" style="gap: 56px; align-items:center;">
+      <div>
+        <span class="sticker-badge sticker-lime">#INSIGHTS</span>
+        <h2 class="bold-heading" style="font-size: clamp(30px, 4vw, 42px); margin: 18px 0 16px;">The data behind stronger cells.</h2>
+        <p style="font-size: 15.5px; max-width: 440px;">Every attendance mark, offering and activity rolls up automatically — so leaders spend less time compiling reports and more time with their members.</p>
+      </div>
+      <div class="card" style="padding:20px; border-radius:20px;">
+        <div class="u-flex u-gap-8" style="margin-bottom:16px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:var(--pop-pink);"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:var(--pop-yellow);"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:var(--pop-lime);"></span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="card" style="padding:16px; box-shadow:none; border-color:var(--line-100);">
+            <div class="summary-label" style="margin-bottom:6px;">Cell Strength</div>
+            <div class="summary-value" style="font-size:22px;">24</div>
+          </div>
+          <div class="card" style="padding:16px; box-shadow:none; border-color:var(--line-100);">
+            <div class="summary-label" style="margin-bottom:6px;">Attendance</div>
+            <div class="summary-value" style="font-size:22px;">87.5%</div>
+          </div>
+          <div class="card" style="padding:16px; box-shadow:none; border-color:var(--line-100);">
+            <div class="summary-label" style="margin-bottom:6px;">Growth</div>
+            <div class="summary-value" style="font-size:22px;">+12%</div>
+          </div>
+          <div class="card" style="padding:16px; box-shadow:none; border-color:var(--line-100);">
+            <div class="summary-label" style="margin-bottom:6px;">Offering</div>
+            <div class="summary-value" style="font-size:22px;">₦45.5k</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FEATURES ============ -->
+<section class="section" id="features">
+  <div class="container" style="text-align:center; margin-bottom: 24px;">
+    <span class="sticker-badge sticker-pink">#THEFEATURES</span>
+    <h2 class="bold-heading" style="font-size: clamp(30px, 4vw, 44px); margin: 18px 0 0;">Bring on the features.</h2>
+  </div>
+
+  <div class="block-panel purple">
+    <div class="block-copy">
+      <div class="block-eyebrow">01 · Attendance</div>
+      <h3>Take attendance in under a minute.</h3>
+      <p>Mark present, absent, excused, visitor or first-timer with one tap, and watch the weekly trend build itself.</p>
+    </div>
+    <div class="block-mock">
+      <div class="u-flex u-between u-center" style="margin-bottom:14px;">
+        <span style="font-weight:700; font-size:13px;">This week</span>
+        <span class="badge badge-active">21 / 24 present</span>
+      </div>
+      <div style="display:flex; gap:6px; align-items:flex-end; height:80px;">
+        <div style="flex:1; background:var(--pop-purple); border-radius:6px; height:55%;"></div>
+        <div style="flex:1; background:var(--pop-purple); border-radius:6px; height:70%;"></div>
+        <div style="flex:1; background:var(--pop-purple); border-radius:6px; height:60%;"></div>
+        <div style="flex:1; background:var(--pop-purple); border-radius:6px; height:85%;"></div>
+        <div style="flex:1; background:var(--pop-purple); border-radius:6px; height:90%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-panel pink reverse">
+    <div class="block-copy">
+      <div class="block-eyebrow">02 · Growth</div>
+      <h3>Watch members move from visitor to leader.</h3>
+      <p>Six growth stages, from Joined Cell to Cell Leader Candidate — so every leader knows exactly who's ready for the next step.</p>
+    </div>
+    <div class="block-mock">
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div class="u-flex u-between u-center"><span style="font-size:13px;">Regular Attendee</span><span class="badge badge-pending">6</span></div>
+        <div class="u-flex u-between u-center"><span style="font-size:13px;">Active Member</span><span class="badge badge-pending">9</span></div>
+        <div class="u-flex u-between u-center"><span style="font-size:13px;">Worker</span><span class="badge badge-active">4</span></div>
+        <div class="u-flex u-between u-center"><span style="font-size:13px;">Cell Volunteer</span><span class="badge badge-active">3</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-panel yellow">
+    <div class="block-copy">
+      <div class="block-eyebrow">03 · Offerings</div>
+      <h3>Offering records, without the spreadsheet.</h3>
+      <p>Log the type, amount and method in seconds, and keep a clean history that's ready whenever it's needed for reporting.</p>
+    </div>
+    <div class="block-mock">
+      <div class="summary-label" style="margin-bottom:4px;">This week</div>
+      <div class="summary-value" style="font-size:28px; margin-bottom:14px;">₦45,500</div>
+      <div class="table-wrap" style="border:none;">
+        <table class="data-table" style="min-width:0;">
+          <tbody>
+            <tr><td style="padding:8px 0; border:none;">Cash</td><td style="padding:8px 0; border:none; text-align:right;">₦38,000</td></tr>
+            <tr><td style="padding:8px 0; border:none;">Transfer</td><td style="padding:8px 0; border:none; text-align:right;">₦7,500</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-panel lime reverse">
+    <div class="block-copy">
+      <div class="block-eyebrow">04 · Reports</div>
+      <h3>Reports that roll up on their own.</h3>
+      <p>Every cell leader's weekly report flows up through chapter and group — so administrators always know where attention is needed.</p>
+    </div>
+    <div class="block-mock">
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div class="u-flex u-between u-center"><span style="font-size:13px;">Grace Cell</span><span class="badge badge-active">Reviewed</span></div>
+        <div class="u-flex u-between u-center"><span style="font-size:13px;">Mercy Cell</span><span class="badge badge-pending">Submitted</span></div>
+        <div class="u-flex u-between u-center"><span style="font-size:13px;">Faith Cell</span><span class="badge badge-attention">Pending</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GROUPS ============ -->
+<section class="section" id="groups">
+  <div class="container" style="text-align:center;">
+    <span class="sticker-badge sticker-yellow">#EVERYGROUP</span>
+    <h2 class="bold-heading" style="font-size: clamp(28px, 4vw, 40px); margin: 18px 0 28px;">Built for every group.</h2>
+    <div class="group-chip-grid" style="justify-content:center;" id="group-chip-grid">
+      <span class="group-chip"><i data-lucide="network" style="width:15px;height:15px;"></i> NAU GROUP</span>
+      <span class="group-chip"><i data-lucide="network" style="width:15px;height:15px;"></i> GRACE GROUP</span>
+      <span class="group-chip"><i data-lucide="network" style="width:15px;height:15px;"></i> SUPERNATURAL GROUP</span>
+      <span class="group-chip"><i data-lucide="network" style="width:15px;height:15px;"></i> UNN GROUP</span>
+      <span class="group-chip"><i data-lucide="network" style="width:15px;height:15px;"></i> LUXURIANT GROUP</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PERSONAS ============ -->
+<section class="persona-panel persona-purple">
+  <div class="persona-avatar-wrap">
+    <div class="persona-avatar"><i data-lucide="user-round"></i></div>
+  </div>
+  <div class="persona-copy">
+    <div class="block-eyebrow">Cell Ministry App for</div>
+    <h2>Cell Leaders</h2>
+    <p>Everything your weekly cell needs in one place — attendance, offerings, activities and members, without the paperwork.</p>
+    <a href="login.html" class="btn btn-secondary">Sign In</a>
+  </div>
+</section>
+
+<section class="persona-panel persona-yellow reverse">
+  <div class="persona-copy">
+    <div class="block-eyebrow">Cell Ministry App for</div>
+    <h2>Administrators</h2>
+    <p>See every group, chapter and cell at a glance, and know exactly which ones need attention this week.</p>
+    <a href="login.html" class="btn btn-primary">Sign In</a>
+  </div>
+  <div class="persona-avatar-wrap">
+    <div class="persona-avatar"><i data-lucide="shield-check"></i></div>
+  </div>
+</section>
+
+<section class="persona-panel persona-navy">
+  <div class="persona-avatar-wrap">
+    <div class="persona-avatar has-photo">
+      <img src="community-group.jpg" alt="Members of the ministry community" loading="lazy" />
+    </div>
+  </div>
+  <div class="persona-copy">
+    <div class="block-eyebrow">Cell Ministry App for</div>
+    <h2>Anyone in the ministry</h2>
+    <p>New here? Register in a couple of minutes and your cell is set up and ready to go — real groups, real chapters, no invented data.</p>
+    <a href="register.html" class="btn btn-secondary">Create Account</a>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="ghost-footer" id="contact">
+  <div class="container footer-inner" style="margin-top:0; border-top-color: rgba(255,255,255,0.12);">
+    <p class="footer-disclaimer" style="color:rgba(255,255,255,0.45);">© 2026 Christ Embassy Campus Ministry. All rights reserved.</p>
+    <div class="footer-links">
+      <a href="#features" style="color:rgba(255,255,255,0.65);">Features</a>
+      <a href="#groups" style="color:rgba(255,255,255,0.65);">Groups</a>
+      <a href="login.html" style="color:rgba(255,255,255,0.65);">Sign In</a>
+    </div>
+  </div>
+</footer>
+
+<script src="utils.js"></script>
+<script src="theme.js"></script>
+<script src="app.js"></script>
+<script>
+  const GROUP_NAMES = ["NAU GROUP", "GRACE GROUP", "SUPERNATURAL GROUP", "UNN GROUP", "LUXURIANT GROUP"];
+  const track = document.getElementById("marquee-track");
+  const items = GROUP_NAMES.map(n => `<span class="marquee-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.5 7.5H22l-6 4.5 2.5 7.5L12 17l-6.5 4.5L8 14l-6-4.5h7.5z"/></svg> ${n}</span>`).join("");
+  track.innerHTML = items + items;
+
+  lucide.createIcons();
+</script>
+</body>
+</html>

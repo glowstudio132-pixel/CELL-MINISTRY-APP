@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem("ceCampusTheme");
+    var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  } catch (e) {}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sign In — Cell Ministry App</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="responsive.css">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+
+<div class="auth-page">
+  <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" style="position:absolute; top:24px; right:24px; z-index:2;">
+    <i data-lucide="moon" class="theme-icon-light"></i>
+    <i data-lucide="sun" class="theme-icon-dark"></i>
+  </button>
+
+  <div class="auth-card-wrap">
+    <div class="auth-top">
+      <div class="auth-icon"><img src="blw-logo.png" alt="Cell Ministry App" /></div>
+      <h1>Welcome back</h1>
+      <p>Sign in to continue to your account.</p>
+    </div>
+
+    <div class="card auth-card" style="padding:28px;">
+      <div class="role-select-row" role="tablist" aria-label="Select account type">
+        <button class="role-option active" data-role="cell_leader" role="tab" aria-selected="true">
+          <i data-lucide="user-round"></i> Cell Leader
+        </button>
+        <button class="role-option" data-role="administrator" role="tab" aria-selected="false">
+          <i data-lucide="shield-check"></i> Administrator
+        </button>
+      </div>
+
+      <div class="form-error" id="form-error"></div>
+
+      <form id="login-form" novalidate>
+        <div class="field">
+          <label for="email">Email / Username</label>
+          <input class="input" type="text" id="email" autocomplete="username" />
+          <span class="field-hint" id="email-error" style="display:none; color:var(--danger-600);"></span>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="password-field">
+            <input class="input" type="password" id="password" autocomplete="current-password" style="padding-right:42px;" />
+            <button type="button" class="password-toggle" id="password-toggle" aria-label="Show password">
+              <i data-lucide="eye"></i>
+            </button>
+          </div>
+          <span class="field-hint" id="password-error" style="display:none; color:var(--danger-600);"></span>
+        </div>
+        <div class="auth-row">
+          <label class="checkbox-row"><input type="checkbox" id="remember" /> Remember me</label>
+          <a href="#" style="color:var(--royal-600); font-weight:600;" id="forgot-link">Forgot password?</a>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="signin-btn">
+          <span class="btn-spinner"></span>
+          <i data-lucide="log-in" class="btn-label-icon"></i>
+          <span class="btn-label-text">Sign In</span>
+        </button>
+      </form>
+
+      <div class="auth-divider">OR</div>
+
+      <button type="button" class="btn btn-google btn-block" id="google-btn">
+        <svg class="google-g" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.8-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.6 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.6 5.1 29.6 3 24 3 16.3 3 9.7 7.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.4C29.6 36.4 26.9 37 24 37c-5.2 0-9.6-3.3-11.2-8l-6.6 5.1C9.6 40.6 16.3 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.6 5.4C41.5 35.9 45 30.4 45 24c0-1.4-.1-2.8-.4-3.5z"/></svg>
+        Continue with Google
+      </button>
+
+      <p class="auth-foot">Don't have an account? <a href="register.html">Create account</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- Forgot password modal ---------- -->
+<div class="modal-overlay hidden" id="forgot-modal">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header">
+      <h3 style="font-size:16px;">Forgot password</h3>
+      <button class="modal-close" onclick="closeModal('forgot-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:20px;">Password recovery will be available when the secure authentication system is connected.</p>
+      <button class="btn btn-primary btn-block" onclick="closeModal('forgot-modal')">Got it</button>
+    </div>
+  </div>
+</div>
+
+<script src="utils.js"></script>
+<script src="theme.js"></script>
+<script src="data.js"></script>
+<script src="auth.js"></script>
+<script>
+  let selectedRole = "cell_leader";
+  const roleButtons = document.querySelectorAll(".role-option");
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const errorBox = document.getElementById("form-error");
+  const emailError = document.getElementById("email-error");
+  const passwordError = document.getElementById("password-error");
+  const signinBtn = document.getElementById("signin-btn");
+
+  roleButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      roleButtons.forEach(b => { b.classList.remove("active"); b.setAttribute("aria-selected", "false"); });
+      btn.classList.add("active");
+      btn.setAttribute("aria-selected", "true");
+      selectedRole = btn.getAttribute("data-role");
+      errorBox.classList.remove("show");
+    });
+  });
+
+  document.getElementById("password-toggle").addEventListener("click", () => {
+    const btn = document.getElementById("password-toggle");
+    const show = passwordInput.type === "password";
+    passwordInput.type = show ? "text" : "password";
+    btn.innerHTML = show ? '<i data-lucide="eye-off"></i>' : '<i data-lucide="eye"></i>';
+    lucide.createIcons();
+  });
+
+  function clearFieldErrors() {
+    [emailError, passwordError].forEach(el => { el.style.display = "none"; el.textContent = ""; });
+    errorBox.classList.remove("show");
+  }
+
+  document.getElementById("login-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    clearFieldErrors();
+
+    let hasError = false;
+    if (!emailInput.value.trim()) {
+      emailError.textContent = "Please enter your email or username.";
+      emailError.style.display = "block";
+      hasError = true;
+    }
+    if (!passwordInput.value) {
+      passwordError.textContent = "Please enter your password.";
+      passwordError.style.display = "block";
+      hasError = true;
+    }
+    if (hasError) return;
+
+    signinBtn.classList.add("is-loading");
+    signinBtn.disabled = true;
+    signinBtn.querySelector(".btn-label-text").textContent = "Signing in...";
+
+    setTimeout(() => {
+      const remember = document.getElementById("remember").checked;
+      const result = login(selectedRole, emailInput.value.trim(), passwordInput.value, remember);
+
+      if (!result.ok) {
+        signinBtn.classList.remove("is-loading");
+        signinBtn.disabled = false;
+        signinBtn.querySelector(".btn-label-text").textContent = "Sign In";
+        errorBox.textContent = result.message;
+        errorBox.classList.add("show");
+        return;
+      }
+
+      signinBtn.querySelector(".btn-label-text").textContent = "Welcome back, " + result.session.name.split(" ")[0] + ".";
+      setTimeout(() => { redirectByRole(result.session); }, 600);
+    }, 500);
+  });
+
+  document.getElementById("forgot-link").addEventListener("click", (e) => {
+    e.preventDefault();
+    openModal("forgot-modal");
+  });
+
+  document.getElementById("google-btn").addEventListener("click", () => {
+    showToast("Google sign-in needs a connected OAuth provider to go live.", "error");
+  });
+
+  lucide.createIcons();
+</script>
+</body>
+</html>
