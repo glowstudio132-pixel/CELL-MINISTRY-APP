@@ -4,6 +4,17 @@ All files are flat in this one folder — no subfolders — so it can be deploye
 
 ## Recent fixes
 
+- **Blurry cell-meeting photo removed**: replaced with a self-contained animated "People → Cell → Growth" visual (SVG connection lines + floating member chips + a pulsing "Cell" core), so there's no photo left to go blurry on any screen size.
+- **Landing page color system**: standardized on blue (primary actions/stats), pink (members/growth), and green (attendance/success) across the landing page, login/register glow, and both dashboards — replacing the earlier purple/yellow/lime mix. Summary cards, quick-action icon chips, sticker badges, feature panels and persona panels all follow this now.
+- **Hero floating icons spread out**: more spacing, varied float distance/timing per icon, hidden below 900px so they never crowd or overlap on tablet/mobile.
+- **Dashboard greeting rebuilt**: "Good morning," now sits above the bold name+wave line (stacked by default, inline once there's room on wide screens) so long names never overlap, get cut off, or wrap awkwardly. A small badge under the name shows the Cell Leader's cell name, or the Administrator's group/zonal scope.
+- **Admin roles**: registration now supports **Group Administrator** (picks one of the 5 real groups) and **Zonal Administrator** (sees all 5, no group field). A Group Administrator's dashboard, Groups page, and group-detail page are all scoped to their own group only — including a redirect if they try to open another group's URL directly.
+- **Admin dashboard grid**: the two stacked summary-grids (with a fragile negative-margin hack) are now one grid that reflows cleanly (`repeat(auto-fit, minmax(190px,1fr))`) at any card count, so there's no more uneven/gappy last row.
+- **Mobile bottom nav**: each item is now a proper rounded button container, with the active one filled in blue — not just a bare icon+label floating on its own.
+- **Quick actions** on the Cell Leader dashboard now use colored icon chips (blue/pink/green) with a trailing chevron, instead of plain inline icons.
+
+## Earlier fixes
+
 - **Hero headline is now mega-bold**: huge, tight-leading, ultra-bold display type (inspired by a bold reference landing page you shared), with small floating accent badges around it and a stat line ("Built for 5 groups and 26 chapters...") beneath the subtitle.
 - **Two real photos added**: a cell-meeting photo now anchors a full-bleed "This is what a cell meeting looks like" band right under the hero, and a community group photo now fills the avatar in the "Anyone in the ministry" section — both are the images you uploaded, resized and compressed for web (`community-cell.jpg`, `community-group.jpg`). The other two persona sections (Cell Leaders, Administrators) keep icon-style avatars, not photos, per your note that icon/illustrated avatars are fine there.
 - Added a two-card intro block (pink + black) right under the hero for extra visual punch, matching the reference layout's card pairing.

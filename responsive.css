@@ -101,6 +101,19 @@
   position: sticky; top: 0; z-index: 50;
 }
 .topbar-title h1 { font-size: 20px; line-height: 1.25; }
+.greeting-block { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 8px; }
+.greeting-lead { font-size: 14px; font-weight: 500; color: var(--ink-500); width: 100%; }
+.greeting-name { font-size: 21px; font-weight: 800; font-family: var(--font-display); color: var(--ink-900); line-height: 1.3; }
+.greeting-context {
+  display: inline-flex; align-items: center;
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em;
+  color: var(--royal-700); background: var(--violet-100);
+  padding: 3px 10px; border-radius: var(--r-full);
+  margin-left: 2px;
+}
+@media (min-width: 640px) {
+  .greeting-lead { width: auto; }
+}
 .topbar-title p { font-size: 13px; margin-top: 2px; }
 .topbar-actions { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
 .icon-btn {
@@ -120,7 +133,7 @@
 .page-body { padding: 28px 32px 100px; }
 
 /* ---------- Summary cards ---------- */
-.summary-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 28px; }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin-bottom: 28px; }
 .summary-card { padding: 22px; }
 .summary-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
 .summary-icon { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; }
@@ -128,6 +141,7 @@
 .summary-icon.tone-royal { background: var(--violet-100); color: var(--royal-700); }
 .summary-icon.tone-gold { background: var(--gold-100); color: var(--gold-500); }
 .summary-icon.tone-success { background: var(--success-100); color: var(--success-600); }
+.summary-icon.tone-pink { background: rgba(240, 61, 158, 0.14); color: var(--pop-pink); }
 .summary-value { font-family: var(--font-display); font-size: 27px; font-weight: 700; color: var(--ink-900); }
 .summary-label { font-size: 13px; color: var(--ink-500); margin-top: 4px; }
 .summary-delta { font-size: 12px; font-weight: 600; }
@@ -144,15 +158,24 @@
 .bottom-nav {
   display: none;
   position: fixed; bottom: 0; left: 0; right: 0;
-  background: var(--paper-0);
+  background: var(--surface-glass);
+  backdrop-filter: blur(10px);
   border-top: 1px solid var(--line-200);
   z-index: 90;
-  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
 }
-.bottom-nav-inner { display: flex; justify-content: space-around; }
-.bn-item { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 8px; color: var(--ink-400); font-size: 10.5px; font-weight: 600; min-width: 56px; }
-.bn-item svg { width: 21px; height: 21px; }
-.bn-item.active { color: var(--royal-600); }
+.bottom-nav-inner { display: flex; justify-content: space-around; gap: 4px; }
+.bn-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; padding: 7px 10px;
+  border-radius: 14px;
+  color: var(--ink-400); font-size: 10.5px; font-weight: 600;
+  min-width: 56px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.bn-item svg { width: 20px; height: 20px; }
+.bn-item.active { color: #fff; background: var(--royal-600); }
+.bn-item:not(.active):active { background: var(--paper-50); }
 
 /* ---------- Profile menu ---------- */
 .profile-menu { position: relative; }
@@ -211,6 +234,23 @@
 .summary-card, .stat-item, .group-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
 .summary-card:hover, .group-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 
+/* ---------- Quick action rows ---------- */
+.quick-action {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 12px 14px;
+  border-radius: 14px; border: 1px solid var(--line-200);
+  background: var(--paper-0);
+  font-size: 14px; font-weight: 600; color: var(--ink-900);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.quick-action:hover { border-color: var(--royal-500); transform: translateX(2px); }
+.qa-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.qa-icon svg { width: 16px; height: 16px; }
+.qa-blue { background: var(--violet-100); color: var(--royal-700); }
+.qa-pink { background: rgba(240, 61, 158, 0.14); color: var(--pop-pink); }
+.qa-green { background: var(--success-100); color: var(--success-600); }
+.qa-arrow { margin-left: auto; width: 16px; height: 16px; color: var(--ink-400); flex-shrink: 0; }
+
 /* ---------- Group / chapter cards (Admin) ---------- */
 .group-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .group-card { padding: 22px; cursor: pointer; }
@@ -247,7 +287,6 @@
    RESPONSIVE BREAKPOINTS
    ============================================================ */
 @media (max-width: 1160px) {
-  .summary-grid { grid-template-columns: repeat(3, 1fr); }
   .panel-grid-2 { grid-template-columns: 1fr; }
 }
 
@@ -266,6 +305,8 @@
   .menu-toggle { display: block; }
   .topbar { padding: 10px 16px; gap: 8px; }
   .topbar-title h1 { font-size: 17px; }
+  .greeting-name { font-size: 18px; }
+  .greeting-lead { font-size: 13px; }
   .topbar-actions { gap: 8px; }
   .icon-btn { width: 36px; height: 36px; }
   .icon-btn svg { width: 17px; height: 17px; }

@@ -400,6 +400,8 @@ table.data-table tbody tr:hover { background: var(--paper-50); }
 .sticker-yellow { background: var(--pop-yellow); }
 .sticker-lime { background: var(--pop-lime); }
 .sticker-pink { background: var(--pop-pink); color: #fff; }
+.sticker-blue { background: var(--royal-500); color: #fff; border-color: var(--royal-700); }
+.sticker-green { background: var(--success-600); color: #fff; border-color: #0f5c40; }
 
 .bold-heading {
   font-family: var(--font-display);

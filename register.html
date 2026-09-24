@@ -80,6 +80,24 @@
           </div>
         </div>
 
+        <div id="admin-fields" style="display:none;">
+          <div class="field">
+            <label for="adminType">Admin Type</label>
+            <select class="select" id="adminType">
+              <option value="group_admin">Group Administrator</option>
+              <option value="zonal_admin">Zonal Administrator</option>
+            </select>
+            <span class="field-hint" id="adminType-hint">Group Administrators manage one group. Zonal Administrators see all five.</span>
+          </div>
+          <div class="field" id="admin-group-field">
+            <label for="adminGroup">Select Group</label>
+            <select class="select" id="adminGroup">
+              <option value="">Select a group</option>
+            </select>
+            <span class="field-hint field-error" id="adminGroup-error"></span>
+          </div>
+        </div>
+
         <div class="field">
           <label for="password">Password</label>
           <div class="password-field">
@@ -122,12 +140,22 @@
   const formError = document.getElementById("form-error");
   const registerBtn = document.getElementById("register-btn");
 
+  const adminFields = document.getElementById("admin-fields");
+  const adminTypeSelect = document.getElementById("adminType");
+  const adminGroupField = document.getElementById("admin-group-field");
+  const adminGroupSelect = document.getElementById("adminGroup");
+
   // Populate groups from the real ministry data.
   getGroups().forEach(g => {
     const opt = document.createElement("option");
     opt.value = g.id;
     opt.textContent = g.name;
     groupSelect.appendChild(opt);
+
+    const adminOpt = document.createElement("option");
+    adminOpt.value = g.id;
+    adminOpt.textContent = g.name;
+    adminGroupSelect.appendChild(adminOpt);
   });
 
   groupSelect.addEventListener("change", () => {
@@ -143,6 +171,10 @@
       chapters.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
   });
 
+  adminTypeSelect.addEventListener("change", () => {
+    adminGroupField.style.display = adminTypeSelect.value === "group_admin" ? "" : "none";
+  });
+
   roleButtons.forEach(btn => {
     btn.addEventListener("click", () => {
       roleButtons.forEach(b => { b.classList.remove("active"); b.setAttribute("aria-selected", "false"); });
@@ -150,6 +182,8 @@
       btn.setAttribute("aria-selected", "true");
       selectedRole = btn.getAttribute("data-role");
       leaderFields.style.display = selectedRole === "cell_leader" ? "" : "none";
+      adminFields.style.display = selectedRole === "administrator" ? "" : "none";
+      if (selectedRole === "administrator") adminGroupField.style.display = adminTypeSelect.value === "group_admin" ? "" : "none";
       formError.classList.remove("show");
     });
   });
@@ -176,7 +210,7 @@
   document.getElementById("register-form").addEventListener("submit", (e) => {
     e.preventDefault();
     formError.classList.remove("show");
-    ["name", "email", "group", "chapter", "cellName", "password", "confirmPassword"].forEach(id => setFieldError(id, ""));
+    ["name", "email", "group", "chapter", "cellName", "adminGroup", "password", "confirmPassword"].forEach(id => setFieldError(id, ""));
 
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
@@ -192,6 +226,10 @@
       if (!groupSelect.value) hasError = setFieldError("group", "Please select a group.") || hasError;
       if (!chapterSelect.value) hasError = setFieldError("chapter", "Please select a chapter.") || hasError;
       if (!document.getElementById("cellName").value.trim()) hasError = setFieldError("cellName", "Please enter your cell name.") || hasError;
+    }
+
+    if (selectedRole === "administrator" && adminTypeSelect.value === "group_admin") {
+      if (!adminGroupSelect.value) hasError = setFieldError("adminGroup", "Please select a group.") || hasError;
     }
 
     if (!password) hasError = setFieldError("password", "Please enter a password.") || hasError;
@@ -215,8 +253,18 @@
     setTimeout(() => {
       const account = {
         name, email, password, role: selectedRole,
-        group: null, chapter: null, cellName: null, leaderId: null
+        group: null, chapter: null, cellName: null, leaderId: null,
+        adminType: null, groupId: null, groupName: null
       };
+
+      if (selectedRole === "administrator") {
+        account.adminType = adminTypeSelect.value;
+        if (adminTypeSelect.value === "group_admin") {
+          const adminGroup = getGroupById(adminGroupSelect.value);
+          account.groupId = adminGroup.id;
+          account.groupName = adminGroup.name;
+        }
+      }
 
       if (selectedRole === "cell_leader") {
         const chapter = getChapterById(chapterSelect.value);

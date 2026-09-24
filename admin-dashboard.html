@@ -63,7 +63,11 @@
       <div class="u-flex u-center u-gap-16">
         <button class="menu-toggle" aria-label="Open menu"><span></span><span></span><span></span></button>
         <div class="topbar-title">
-          <h1 id="greeting">Good morning, Admin 👋</h1>
+          <div class="greeting-block">
+            <span class="greeting-lead">Good morning,</span>
+            <span class="greeting-name" id="greeting-name">Admin 👋</span>
+            <span class="greeting-context" id="greeting-context" style="display:none;"></span>
+          </div>
         </div>
       </div>
       <div class="topbar-actions">
@@ -83,7 +87,6 @@
       <div class="tip-card"><i data-lucide="lightbulb"></i> <span class="tip-text" id="tip-text">Let's see what's happening across your groups and cells today.</span></div>
 
       <div class="summary-grid" id="summary-grid"></div>
-      <div class="summary-grid" id="summary-grid-secondary" style="margin-top:-12px;"></div>
 
       <div class="panel-grid-2">
         <div class="panel">
@@ -168,6 +171,16 @@
     initProfileMenu("profile-menu-slot", session);
     rotateTips();
 
+    // ---------- Greeting ----------
+    document.getElementById("greeting-name").textContent = session.name.split(" ")[0] + " 👋";
+    const ctx = document.getElementById("greeting-context");
+    if (session.adminType === "group_admin" && session.groupName) {
+      ctx.textContent = session.groupName + " ADMIN";
+    } else {
+      ctx.textContent = "ZONAL ADMINISTRATOR";
+    }
+    ctx.style.display = "inline-flex";
+
     function goLogout() { confirmAction("Are you sure you want to end your current session?", logout, { title: "Sign out?", confirmLabel: "Sign Out" }); }
     document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
     document.getElementById("bn-logout").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
@@ -179,54 +192,54 @@
       });
     });
 
-    // ---------- Aggregate ministry-wide stats ----------
-    const groups = getGroups();
-    const chapters = getChapters();
-    const cells = getCells();
-    const leaders = getLeaders();
-    const members = getMembers().filter(m => m.status === "Active");
-    const offerings = getOfferings();
+    // ---------- Scope data: a Group Administrator only sees their own group ----------
+    const isGroupAdmin = session.adminType === "group_admin" && session.groupId;
+    const groups = isGroupAdmin ? getGroups().filter(g => g.id === session.groupId) : getGroups();
+    const groupIds = groups.map(g => g.id);
+    const chapters = getChapters().filter(ch => groupIds.includes(ch.groupId));
+    const chapterIds = chapters.map(ch => ch.id);
+    const cells = getCells().filter(c => chapterIds.includes(c.chapterId));
+    const cellIds = cells.map(c => c.id);
+    const leaders = getLeaders().filter(l => cellIds.includes(l.cellId));
+    const members = getMembers().filter(m => cellIds.includes(m.cellId) && m.status === "Active");
+    const offerings = getOfferings().filter(o => cellIds.includes(o.cellId));
+    const reports = getReports().filter(r => cellIds.includes(r.cellId));
+
     const totalOffering = offerings.reduce((sum, o) => sum + o.amount, 0);
     const activeCells = cells.filter(c => c.status === "Active").length;
-    const reportsSubmitted = getReports().filter(r => r.status === "Submitted" || r.status === "Reviewed").length;
+    const reportsSubmitted = reports.filter(r => r.status === "Submitted" || r.status === "Reviewed").length;
 
     const cellsWithAttendance = cells.filter(c => getLatestAttendance(c.id));
     const avgAttendance = cellsWithAttendance.length
       ? Math.round(cellsWithAttendance.reduce((sum, c) => sum + getAttendanceRate(c.id), 0) / cellsWithAttendance.length * 10) / 10
       : 0;
 
-    const primaryCards = [
+    const cards = [
       { icon: "users-round", tone: "royal", value: cells.length, label: "Total Cells" },
       { icon: "user-check", tone: "royal", value: leaders.length, label: "Total Leaders" },
-      { icon: "users", tone: "success", value: members.length, label: "Total Members" },
+      { icon: "users", tone: "pink", value: members.length, label: "Total Members" },
       { icon: "trending-up", tone: "success", value: avgAttendance + "%", label: "Average Attendance" },
-      { icon: "hand-coins", tone: "gold", value: formatNaira(totalOffering), label: "Total Offering" }
-    ];
-    const secondaryCards = [
-      { icon: "network", tone: "royal", value: groups.length, label: "Total Groups" },
+      { icon: "hand-coins", tone: "pink", value: formatNaira(totalOffering), label: "Total Offering" },
+      { icon: "network", tone: "royal", value: groups.length, label: isGroupAdmin ? "Your Group" : "Total Groups" },
       { icon: "building-2", tone: "royal", value: chapters.length, label: "Total Chapters" },
       { icon: "file-text", tone: "success", value: reportsSubmitted, label: "Reports Submitted" }
     ];
 
-    function renderCards(targetId, cards) {
-      document.getElementById(targetId).innerHTML = cards.map(c => `
-        <div class="card summary-card">
-          <div class="summary-top">
-            <div class="summary-icon tone-${c.tone}"><i data-lucide="${c.icon}"></i></div>
-          </div>
-          <div class="summary-value">${c.value}</div>
-          <div class="summary-label">${c.label}</div>
+    document.getElementById("summary-grid").innerHTML = cards.map(c => `
+      <div class="card summary-card">
+        <div class="summary-top">
+          <div class="summary-icon tone-${c.tone}"><i data-lucide="${c.icon}"></i></div>
         </div>
-      `).join("");
-    }
-    renderCards("summary-grid", primaryCards);
-    renderCards("summary-grid-secondary", secondaryCards);
+        <div class="summary-value">${c.value}</div>
+        <div class="summary-label">${c.label}</div>
+      </div>
+    `).join("");
 
     // ---------- Cells by chapter ----------
     if (cells.length) {
       const chapterLabels = chapters.map(ch => ch.name);
       const chapterCounts = chapters.map(ch => getCells(ch.id).length);
-      renderBarChart("cells-by-chapter", chapterLabels, chapterCounts, { label: "Cells", color: "#7c6fe0" });
+      renderBarChart("cells-by-chapter", chapterLabels, chapterCounts, { label: "Cells", color: "#3346d6" });
     } else {
       document.getElementById("chapter-chart-wrap").innerHTML = `<div class="empty-state"><h4>No cells have been added yet</h4><p>Cell counts by chapter will appear here once cells exist.</p></div>`;
     }
@@ -235,7 +248,7 @@
     if (cells.length) {
       const statusCounts = {};
       cells.forEach(c => { statusCounts[c.status] = (statusCounts[c.status] || 0) + 1; });
-      const statusColors = { "Active": "#1c9a6c", "Needs Attention": "#c9962f", "Pending Report": "#7c6fe0", "Inactive": "#d1483f" };
+      const statusColors = { "Active": "#1c9a6c", "Needs Attention": "#c9962f", "Pending Report": "#f03d9e", "Inactive": "#d1483f" };
       renderDonutChart(
         "cell-status-donut",
         Object.keys(statusCounts),

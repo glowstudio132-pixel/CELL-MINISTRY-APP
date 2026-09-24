@@ -28,7 +28,10 @@ const DEMO_ACCOUNTS = {
     name: "Pastor Wale Adaeze",
     email: "admin@demo.com",
     password: "admin123",
-    role: "administrator"
+    role: "administrator",
+    adminType: "zonal_admin",
+    groupId: null,
+    groupName: null
   }
 };
 
@@ -136,6 +139,14 @@ function login(role, email, password, remember) {
         session.group = group ? group.name : session.group;
       }
     }
+  }
+
+  // Enrich an Administrator's session with their admin type and, for a
+  // Group Administrator, the specific group they're scoped to.
+  if (account.role === "administrator") {
+    session.adminType = account.adminType || "zonal_admin";
+    session.groupId = account.groupId || null;
+    session.groupName = account.groupName || null;
   }
 
   storeSession(session, !!remember);

@@ -115,7 +115,9 @@
       });
     });
 
-    const groups = getGroups();
+    const groups = (session.adminType === "group_admin" && session.groupId)
+      ? getGroups().filter(g => g.id === session.groupId)
+      : getGroups();
     document.getElementById("group-grid").innerHTML = groups.map(g => {
       const stats = getGroupStats(g.id);
       return `

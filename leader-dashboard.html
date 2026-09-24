@@ -60,7 +60,11 @@
       <div class="u-flex u-center u-gap-16">
         <button class="menu-toggle" aria-label="Open menu"><span></span><span></span><span></span></button>
         <div class="topbar-title">
-          <h1 id="greeting">Good morning 👋</h1>
+          <div class="greeting-block">
+            <span class="greeting-lead">Good morning,</span>
+            <span class="greeting-name" id="greeting-name">there 👋</span>
+            <span class="greeting-context" id="greeting-context" style="display:none;"></span>
+          </div>
         </div>
       </div>
       <div class="topbar-actions">
@@ -106,20 +110,30 @@
             <h3>Quick actions</h3>
           </div>
           <div style="display:flex; flex-direction:column; gap:10px;">
-            <button class="btn btn-secondary btn-block" style="justify-content:flex-start;" onclick="goTo('leader-members.html')">
-              <i data-lucide="user-plus" class="btn-add-icon"></i> Add Member
+            <button class="quick-action" onclick="goTo('leader-members.html')">
+              <span class="qa-icon qa-blue"><i data-lucide="user-plus"></i></span>
+              <span>Add Member</span>
+              <i data-lucide="chevron-right" class="qa-arrow"></i>
             </button>
-            <button class="btn btn-secondary btn-block" style="justify-content:flex-start;" onclick="goTo('leader-attendance.html')">
-              <i data-lucide="clipboard-check"></i> Take Attendance
+            <button class="quick-action" onclick="goTo('leader-attendance.html')">
+              <span class="qa-icon qa-green"><i data-lucide="clipboard-check"></i></span>
+              <span>Take Attendance</span>
+              <i data-lucide="chevron-right" class="qa-arrow"></i>
             </button>
-            <button class="btn btn-secondary btn-block" style="justify-content:flex-start;" onclick="goTo('leader-offerings.html')">
-              <i data-lucide="hand-coins"></i> Record Offering
+            <button class="quick-action" onclick="goTo('leader-offerings.html')">
+              <span class="qa-icon qa-pink"><i data-lucide="hand-coins"></i></span>
+              <span>Record Offering</span>
+              <i data-lucide="chevron-right" class="qa-arrow"></i>
             </button>
-            <button class="btn btn-secondary btn-block" style="justify-content:flex-start;" onclick="goTo('leader-activities.html')">
-              <i data-lucide="calendar-heart" class="btn-add-icon"></i> Add Activity
+            <button class="quick-action" onclick="goTo('leader-activities.html')">
+              <span class="qa-icon qa-pink"><i data-lucide="calendar-heart"></i></span>
+              <span>Add Activity</span>
+              <i data-lucide="chevron-right" class="qa-arrow"></i>
             </button>
-            <button class="btn btn-secondary btn-block" style="justify-content:flex-start;" onclick="goTo('leader-reports.html')">
-              <i data-lucide="file-text"></i> Submit Report
+            <button class="quick-action" onclick="goTo('leader-reports.html')">
+              <span class="qa-icon qa-blue"><i data-lucide="file-text"></i></span>
+              <span>Submit Report</span>
+              <i data-lucide="chevron-right" class="qa-arrow"></i>
             </button>
           </div>
         </div>
@@ -187,7 +201,12 @@
   document.addEventListener("DOMContentLoaded", () => {
     if (!session) return;
 
-    document.getElementById("greeting").textContent = "Good morning, " + session.name.split(" ")[0] + " 👋";
+    document.getElementById("greeting-name").textContent = session.name.split(" ")[0] + " 👋";
+    if (session.cell) {
+      const ctx = document.getElementById("greeting-context");
+      ctx.textContent = session.cell;
+      ctx.style.display = "inline-flex";
+    }
     initProfileMenu("profile-menu-slot", session);
     rotateTips();
 
@@ -217,9 +236,9 @@
     const cards = [
       { icon: "users-round", tone: "royal", value: strength, label: "Cell Strength" },
       { icon: "clipboard-check", tone: "success", value: latest ? latest.present : 0, label: "This Week's Attendance" },
-      { icon: "trending-up", tone: "royal", value: rate + "%", label: "Attendance Rate" },
-      { icon: "hand-coins", tone: "gold", value: latestOffering ? formatNaira(latestOffering.amount) : formatNaira(0), label: "Offering This Week" },
-      { icon: "calendar-heart", tone: "success", value: activityCount, label: "Activities" }
+      { icon: "trending-up", tone: "success", value: rate + "%", label: "Attendance Rate" },
+      { icon: "hand-coins", tone: "pink", value: latestOffering ? formatNaira(latestOffering.amount) : formatNaira(0), label: "Offering This Week" },
+      { icon: "calendar-heart", tone: "pink", value: activityCount, label: "Activities" }
     ];
 
     document.getElementById("summary-grid").innerHTML = cards.map(c => `

@@ -127,6 +127,12 @@
     const groupId = params.get("group");
     const group = groupId ? getGroupById(groupId) : null;
 
+    // A Group Administrator can only view their own group.
+    if (session.adminType === "group_admin" && session.groupId && groupId !== session.groupId) {
+      window.location.href = "admin-group-detail.html?group=" + session.groupId;
+      return;
+    }
+
     if (!group) {
       document.getElementById("group-title").textContent = "Group not found";
       document.querySelector(".page-body").insertAdjacentHTML("beforeend", `<div class="empty-state"><h4>We couldn't find that group</h4><p>Go back and pick a group from the list.</p></div>`);
