@@ -1,9 +1,11 @@
-# Cell Ministry App — Christ Embassy Campus Ministry
+# Campus Ministry BLW Zone B
 
 All files are flat in this one folder — no subfolders — so it can be deployed as-is.
 
 ## Recent fixes
 
+- **Full rename to Campus Ministry BLW Zone B**: this build is scoped to one zone within Christ Embassy Campus Ministry, not the whole ministry — updated everywhere the old "Cell Ministry" / "Christ Embassy Campus Ministry" branding appeared (nav, sidebars, page titles, hero, persona sections, footer, login/register).
+- **Hero cleanup**: removed the pill/box background behind the hero eyebrow text (it's now plain styled text), and removed the "Access Dashboard" / "Explore Features" buttons from the hero.
 - **Blurry cell-meeting photo removed**: replaced with a self-contained animated "People → Cell → Growth" visual (SVG connection lines + floating member chips + a pulsing "Cell" core), so there's no photo left to go blurry on any screen size.
 - **Landing page color system**: standardized on blue (primary actions/stats), pink (members/growth), and green (attendance/success) across the landing page, login/register glow, and both dashboards — replacing the earlier purple/yellow/lime mix. Summary cards, quick-action icon chips, sticker badges, feature panels and persona panels all follow this now.
 - **Hero floating icons spread out**: more spacing, varied float distance/timing per icon, hidden below 900px so they never crowd or overlap on tablet/mobile.
@@ -21,7 +23,7 @@ All files are flat in this one folder — no subfolders — so it can be deploye
 - **Landing page redesign**: bolder, more colorful visual language (sticker badges, a scrolling group-name marquee, alternating full-bleed color panels for each feature, big persona sections for Cell Leaders/Administrators/anyone new, a giant ghost-text footer wordmark). One deliberate change from the reference style: it avoids the word "magic" for a church product, using bold color and energy instead to keep the tone appropriate for a ministry audience.
 - **Sidebar is now theme-aware**: it used to be hardcoded dark navy in both light and dark mode. It now switches to a light surface in light mode and back to navy in dark mode, using the same token system as the rest of the app (`--sidebar-bg`, `--sidebar-text`, etc. in `style.css`).
 - **Sidebar can now collapse on desktop**: a toggle button in the sidebar header shrinks it to an icon-only rail (with hover tooltips) and remembers the choice across page loads (`components.js`, `initSidebarCollapse`). Mobile keeps its existing drawer behavior.
-- **Renamed** the app to **Cell Ministry App** throughout (nav/sidebar brand, page titles).
+- **Renamed** the app to **Campus Ministry BLW Zone B** throughout (nav/sidebar brand, page titles) — this build is scoped to one zone, not the whole ministry.
 - **Fixed a real bug**: `leader-dashboard.html`, `admin-dashboard.html`, `admin-groups.html`, `admin-group-detail.html`, `index.html`, `login.html` and `register.html` weren't all loading the same three stylesheets, which caused the oversized logo in the sidebar drawer and the boxy/bordered dark-mode toggle button. Every page now loads `style.css` + `components.css` + `responsive.css` consistently.
 - **Fixed dark mode text visibility**: headings, summary card values, and a few other text colors were hardcoded to `--navy-950` (a fixed dark navy that never changes), so they were invisible against dark backgrounds. They now use the theme-aware `--ink-900` token; `--navy-950` is reserved for intentionally-always-dark surfaces (sidebar in dark mode, primary buttons, toasts).
 - **Fixed the mobile topbar overlap**: the topbar had a fixed height, so a wrapping greeting (long name + emoji) would overflow and overlap the content below. It's now auto-height, the profile name/role text collapses to just the avatar on mobile, and the greeting/icons shrink slightly on small screens.

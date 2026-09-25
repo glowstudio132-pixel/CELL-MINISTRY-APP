@@ -19,7 +19,11 @@
   height: 100vh;
   transition: width 0.2s ease;
 }
-.sidebar .brand { color: var(--sidebar-text-strong); }
+.sidebar .brand { color: var(--sidebar-text-strong); min-width: 0; }
+.sidebar .brand-text {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 0;
+}
 .sidebar-brand-row {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding: 0 8px 20px; margin-bottom: 6px; border-bottom: 1px solid var(--sidebar-border);

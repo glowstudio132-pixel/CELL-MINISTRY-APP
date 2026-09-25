@@ -20,6 +20,10 @@
   object-fit: cover;
   flex-shrink: 0;
 }
+.brand-text-nav {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 260px;
+}
 .brand-mark {
   width: 34px; height: 34px;
   border-radius: 10px;
@@ -51,12 +55,10 @@
 .hero-centered-inner { max-width: 640px; margin: 0 auto; text-align: center; }
 .hero-centered-inner h1, .hero-centered-inner .hero-sub { margin-left: auto; margin-right: auto; }
 .hero-centered-inner .hero-actions { justify-content: center; }
-.hero-eyebrow {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-size: 13px; font-weight: 600; color: var(--royal-700);
-  background: var(--violet-100);
-  padding: 6px 14px; border-radius: var(--r-full);
-  margin-bottom: 22px;
+.hero-eyebrow-text {
+  font-size: 13.5px; font-weight: 700; letter-spacing: 0.03em;
+  color: var(--royal-600);
+  margin-bottom: 18px;
 }
 .hero h1 {
   font-size: 50px; line-height: 1.08; font-weight: 700;
@@ -278,6 +280,7 @@
   .nav-links { display: none; }
   .nav-toggle { display: block; }
   .container { padding: 0 20px; }
+  .brand-text-nav { max-width: 150px; }
   .hero { padding: 40px 0 44px; }
   .hero h1 { font-size: 34px; }
   .flow-section { margin: 0 16px; padding: 48px 24px; border-radius: 24px; }
@@ -374,12 +377,8 @@
 :root[data-theme="dark"] .group-chip { color: #fff; border-color: var(--royal-500); }
 
 .ghost-footer {
-  background: var(--navy-950);
-  padding: 40px 24px;
+  padding: 32px 24px;
   text-align: center;
-  border-radius: 32px 32px 0 0;
-  margin: 0 16px;
-  overflow: hidden;
 }
 
 @media (max-width: 900px) {
