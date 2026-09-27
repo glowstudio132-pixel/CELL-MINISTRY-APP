@@ -146,6 +146,7 @@
 .summary-icon.tone-gold { background: var(--gold-100); color: var(--gold-500); }
 .summary-icon.tone-success { background: var(--success-100); color: var(--success-600); }
 .summary-icon.tone-pink { background: rgba(240, 61, 158, 0.14); color: var(--pop-pink); }
+
 .summary-value { font-family: var(--font-display); font-size: 27px; font-weight: 700; color: var(--ink-900); }
 .summary-label { font-size: 13px; color: var(--ink-500); margin-top: 4px; }
 .summary-delta { font-size: 12px; font-weight: 600; }
@@ -158,27 +159,42 @@
 .panel-head h3 { font-size: 16.5px; }
 .panel-grid-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
 
-/* ---------- Mobile bottom nav ---------- */
+/* ---------- Mobile bottom nav ----------
+   Floating rounded pill bar; the active item expands into an
+   icon+label pill, inactive items stay icon-only. Inspired by a
+   reference the user shared. */
 .bottom-nav {
   display: none;
-  position: fixed; bottom: 0; left: 0; right: 0;
+  position: fixed; left: 14px; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom));
   background: var(--surface-glass);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid var(--line-200);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--line-200);
+  border-radius: var(--r-full);
+  box-shadow: var(--shadow-lg);
   z-index: 90;
-  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+  padding: 6px;
 }
-.bottom-nav-inner { display: flex; justify-content: space-around; gap: 4px; }
+.bottom-nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 2px; }
 .bn-item {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 2px; padding: 7px 10px;
-  border-radius: 14px;
-  color: var(--ink-400); font-size: 10.5px; font-weight: 600;
-  min-width: 56px;
-  transition: background 0.15s ease, color 0.15s ease;
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; padding: 10px;
+  border-radius: var(--r-full);
+  color: var(--ink-400); font-size: 12.5px; font-weight: 700;
+  transition: background 0.2s ease, color 0.2s ease, padding 0.2s ease;
+  flex-shrink: 0;
 }
-.bn-item svg { width: 20px; height: 20px; }
-.bn-item.active { color: #fff; background: var(--royal-600); }
+.bn-item svg { width: 19px; height: 19px; flex-shrink: 0; }
+.bn-item .link-text {
+  display: inline-block; max-width: 0; opacity: 0; overflow: hidden;
+  white-space: nowrap; margin-left: 0;
+  transition: max-width 0.25s ease, opacity 0.2s ease, margin-left 0.25s ease;
+}
+.bn-item.active {
+  color: #fff; background: var(--royal-600);
+  padding: 10px 16px;
+  box-shadow: 0 4px 14px rgba(51, 70, 214, 0.35);
+}
+.bn-item.active .link-text { max-width: 90px; opacity: 1; margin-left: 7px; }
 .bn-item:not(.active):active { background: var(--paper-50); }
 
 /* ---------- Profile menu ---------- */
@@ -221,7 +237,8 @@
   color: var(--royal-700);
   font-weight: 500;
 }
-.tip-card svg { width: 17px; height: 17px; flex-shrink: 0; }
+:root[data-theme="dark"] .tip-card { color: #fff; }
+.tip-card svg { width: 17px; height: 17px; flex-shrink: 0; color: var(--gold-500); }
 .tip-text { transition: opacity 0.25s ease; }
 .tip-text.fading { opacity: 0; }
 

@@ -37,16 +37,16 @@
     <div class="side-scroll">
       <div class="side-label">Cell Leader</div>
       <a href="leader-dashboard.html" class="side-link" title="Dashboard"><i data-lucide="layout-dashboard"></i><span class="link-text">Dashboard</span></a>
-      <a href="leader-cell.html" class="side-link soon" title="My Cell"><i data-lucide="users-round"></i><span class="link-text">My Cell</span></a>
-      <a href="leader-members.html" class="side-link soon" title="Members"><i data-lucide="users"></i><span class="link-text">Members</span></a>
-      <a href="leader-attendance.html" class="side-link soon" title="Attendance"><i data-lucide="clipboard-check"></i><span class="link-text">Attendance</span></a>
-      <a href="leader-offerings.html" class="side-link soon" title="Offerings"><i data-lucide="hand-coins"></i><span class="link-text">Offerings</span></a>
-      <a href="leader-growth.html" class="side-link soon" title="Growth"><i data-lucide="trending-up"></i><span class="link-text">Growth</span></a>
-      <a href="leader-activities.html" class="side-link soon" title="Activities"><i data-lucide="calendar-heart"></i><span class="link-text">Activities</span></a>
-      <a href="leader-reports.html" class="side-link soon" title="Reports"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
+      <a href="leader-cell.html" class="side-link" title="My Cell"><i data-lucide="users-round"></i><span class="link-text">My Cell</span></a>
+      <a href="leader-members.html" class="side-link" title="Members"><i data-lucide="users"></i><span class="link-text">Members</span></a>
+      <a href="leader-attendance.html" class="side-link" title="Attendance"><i data-lucide="clipboard-check"></i><span class="link-text">Attendance</span></a>
+      <a href="leader-offerings.html" class="side-link" title="Offerings"><i data-lucide="hand-coins"></i><span class="link-text">Offerings</span></a>
+      <a href="leader-growth.html" class="side-link" title="Growth"><i data-lucide="trending-up"></i><span class="link-text">Growth</span></a>
+      <a href="leader-activities.html" class="side-link" title="Activities"><i data-lucide="calendar-heart"></i><span class="link-text">Activities</span></a>
+      <a href="leader-reports.html" class="side-link" title="Reports"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
       <div class="side-label">Account</div>
-      <a href="leader-notifications.html" class="side-link soon" title="Notifications"><i data-lucide="bell"></i><span class="link-text">Notifications</span></a>
-      <a href="leader-settings.html" class="side-link soon" title="Settings"><i data-lucide="settings"></i><span class="link-text">Settings</span></a>
+      <a href="leader-notifications.html" class="side-link" title="Notifications"><i data-lucide="bell"></i><span class="link-text">Notifications</span></a>
+      <a href="leader-settings.html" class="side-link" title="Settings"><i data-lucide="settings"></i><span class="link-text">Settings</span></a>
     </div>
     <div class="side-foot">
       <a href="#" class="side-link" id="logout-link"><i data-lucide="log-out"></i><span class="link-text">Logout</span></a>
@@ -72,7 +72,7 @@
           <i data-lucide="moon" class="theme-icon-light"></i>
           <i data-lucide="sun" class="theme-icon-dark"></i>
         </button>
-        <button class="icon-btn" aria-label="Notifications" onclick="showToast('You have 2 unread notifications.', 'success')">
+        <button class="icon-btn" aria-label="Notifications" onclick="window.location.href='leader-notifications.html'">
           <i data-lucide="bell"></i><span class="notif-dot"></span>
         </button>
         <div id="profile-menu-slot"></div>
@@ -160,10 +160,10 @@
 <nav class="bottom-nav">
   <div class="bottom-nav-inner">
     <a href="leader-dashboard.html" class="bn-item active"><i data-lucide="layout-dashboard"></i><span class="link-text">Home</span></a>
-    <a href="leader-cell.html" class="bn-item soon"><i data-lucide="users-round"></i><span class="link-text">Cell</span></a>
-    <a href="leader-attendance.html" class="bn-item soon"><i data-lucide="clipboard-check"></i><span class="link-text">Attend</span></a>
-    <a href="leader-reports.html" class="bn-item soon"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
-    <a href="#" class="bn-item" id="bn-logout"><i data-lucide="log-out"></i> Logout</a>
+    <a href="leader-cell.html" class="bn-item"><i data-lucide="users-round"></i><span class="link-text">Cell</span></a>
+    <a href="leader-attendance.html" class="bn-item"><i data-lucide="clipboard-check"></i><span class="link-text">Attend</span></a>
+    <a href="leader-reports.html" class="bn-item"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
+    <a href="#" class="bn-item" id="bn-logout" title="Logout"><i data-lucide="log-out"></i><span class="link-text">Logout</span></a>
   </div>
 </nav>
 
@@ -214,13 +214,6 @@
     document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
     document.getElementById("bn-logout").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
 
-    document.querySelectorAll(".side-link.soon, .bn-item.soon").forEach(link => {
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        showToast("This section isn't available yet.", "success");
-      });
-    });
-
     const cellId = session.cellId || null;
 
     if (!cellId) {
@@ -237,12 +230,12 @@
       { icon: "users-round", tone: "royal", value: strength, label: "Cell Strength" },
       { icon: "clipboard-check", tone: "success", value: latest ? latest.present : 0, label: "This Week's Attendance" },
       { icon: "trending-up", tone: "success", value: rate + "%", label: "Attendance Rate" },
-      { icon: "hand-coins", tone: "pink", value: latestOffering ? formatNaira(latestOffering.amount) : formatNaira(0), label: "Offering This Week" },
-      { icon: "calendar-heart", tone: "pink", value: activityCount, label: "Activities" }
+      { icon: "hand-coins", tone: "royal", value: latestOffering ? formatNaira(latestOffering.amount) : formatNaira(0), label: "Offering This Week" },
+      { icon: "calendar-heart", tone: "success", value: activityCount, label: "Activities" }
     ];
 
     document.getElementById("summary-grid").innerHTML = cards.map(c => `
-      <div class="card summary-card">
+      <div class="card summary-card tone-${c.tone}">
         <div class="summary-top">
           <div class="summary-icon tone-${c.tone}"><i data-lucide="${c.icon}"></i></div>
         </div>

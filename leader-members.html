@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem("ceCampusTheme");
+    var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  } catch (e) {}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Members — Campus Ministry BLW Zone B</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="responsive.css">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand-row">
+      <a href="index.html" class="brand">
+        <img src="blw-logo.png" alt="Campus Ministry BLW Zone B" class="brand-logo" /> <span class="brand-text">Campus Ministry BLW Zone B</span>
+      </a>
+      <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" aria-label="Collapse sidebar" title="Collapse sidebar">
+        <i data-lucide="panel-left-close"></i>
+      </button>
+    </div>
+    <div class="side-scroll">
+      <div class="side-label">Cell Leader</div>
+      <a href="leader-dashboard.html" class="side-link" title="Dashboard"><i data-lucide="layout-dashboard"></i><span class="link-text">Dashboard</span></a>
+      <a href="leader-cell.html" class="side-link" title="My Cell"><i data-lucide="users-round"></i><span class="link-text">My Cell</span></a>
+      <a href="leader-members.html" class="side-link active" title="Members"><i data-lucide="users"></i><span class="link-text">Members</span></a>
+      <a href="leader-attendance.html" class="side-link" title="Attendance"><i data-lucide="clipboard-check"></i><span class="link-text">Attendance</span></a>
+      <a href="leader-offerings.html" class="side-link" title="Offerings"><i data-lucide="hand-coins"></i><span class="link-text">Offerings</span></a>
+      <a href="leader-growth.html" class="side-link" title="Growth"><i data-lucide="trending-up"></i><span class="link-text">Growth</span></a>
+      <a href="leader-activities.html" class="side-link" title="Activities"><i data-lucide="calendar-heart"></i><span class="link-text">Activities</span></a>
+      <a href="leader-reports.html" class="side-link" title="Reports"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
+      <div class="side-label">Account</div>
+      <a href="leader-notifications.html" class="side-link" title="Notifications"><i data-lucide="bell"></i><span class="link-text">Notifications</span></a>
+      <a href="leader-settings.html" class="side-link" title="Settings"><i data-lucide="settings"></i><span class="link-text">Settings</span></a>
+    </div>
+    <div class="side-foot">
+      <a href="#" class="side-link" id="logout-link"><i data-lucide="log-out"></i><span class="link-text">Logout</span></a>
+    </div>
+  </aside>
+  <div class="sidebar-overlay"></div>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="topbar">
+      <div class="u-flex u-center u-gap-16">
+        <button class="menu-toggle" aria-label="Open menu"><span></span><span></span><span></span></button>
+        <div class="topbar-title">
+          <h1>Members</h1>
+          <p>Add, search and manage your cell's members.</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+          <i data-lucide="moon" class="theme-icon-light"></i>
+          <i data-lucide="sun" class="theme-icon-dark"></i>
+        </button>
+        <button class="icon-btn" aria-label="Notifications" onclick="window.location.href='leader-notifications.html'">
+          <i data-lucide="bell"></i><span class="notif-dot"></span>
+        </button>
+        <div id="profile-menu-slot"></div>
+      </div>
+    </div>
+
+    <div class="page-body">
+<div id="no-cell-banner" class="card" style="display:none; padding:20px 24px; margin-bottom:24px; border-color:var(--violet-500);">
+        <div class="u-flex u-center u-gap-16" style="flex-wrap:wrap;">
+          <div class="summary-icon tone-royal" style="flex-shrink:0;"><i data-lucide="info"></i></div>
+          <div style="flex:1; min-width:200px;">
+            <h3 style="font-size:15px; margin-bottom:4px;">No cell linked to your account yet</h3>
+            <p style="font-size:13.5px;">Register a cell, or contact your administrator to get linked to one.</p>
+          </div>
+        </div>
+      </div>
+      <div id="members-content">
+        <div class="panel">
+          <div class="panel-head" style="flex-wrap:wrap; gap:12px;">
+            <h3>Members</h3>
+            <div class="u-flex u-gap-12" style="flex-wrap:wrap;">
+              <input class="input" id="search-input" placeholder="Search members..." style="width:200px;" />
+              <select class="select" id="filter-status" style="width:150px;">
+                <option value="">All statuses</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="openAddMemberModal()"><i data-lucide="user-plus" style="width:15px;height:15px;"></i> Add Member</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Name</th><th>Phone</th><th>Gender</th><th>Join Date</th><th>Status</th><th>Growth Stage</th><th>Attendance</th><th>Actions</th></tr></thead>
+              <tbody id="members-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-overlay hidden" id="member-modal">
+        <div class="modal">
+          <div class="modal-header"><h3 id="member-modal-title" style="font-size:16px;">Add Member</h3><button class="modal-close" onclick="closeModal('member-modal')">&times;</button></div>
+          <div class="modal-body">
+            <form id="member-form">
+              <input type="hidden" id="member-id" />
+              <div class="field"><label>Full Name</label><input class="input" id="m-name" required /></div>
+              <div class="field"><label>Phone</label><input class="input" id="m-phone" /></div>
+              <div class="field"><label>Email</label><input class="input" type="email" id="m-email" /></div>
+              <div class="field"><label>Gender</label><select class="select" id="m-gender"><option>Male</option><option>Female</option></select></div>
+              <div class="field"><label>Date Joined</label><input class="input" type="date" id="m-joined" /></div>
+              <div class="field"><label>Growth Stage</label><select class="select" id="m-stage"></select></div>
+              <div class="field"><label>Status</label><select class="select" id="m-status"><option>Active</option><option>Inactive</option></select></div>
+              <div class="field"><label>Notes</label><textarea class="input" id="m-notes" rows="3"></textarea></div>
+              <button type="submit" class="btn btn-primary btn-block">Save Member</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-overlay hidden" id="view-member-modal">
+        <div class="modal">
+          <div class="modal-header"><h3 style="font-size:16px;">Member Profile</h3><button class="modal-close" onclick="closeModal('view-member-modal')">&times;</button></div>
+          <div class="modal-body" id="view-member-body"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="leader-dashboard.html" class="bn-item" title="Home"><i data-lucide="layout-dashboard"></i><span class="link-text">Home</span></a>
+    <a href="leader-cell.html" class="bn-item" title="Cell"><i data-lucide="users-round"></i><span class="link-text">Cell</span></a>
+    <a href="leader-attendance.html" class="bn-item" title="Attend"><i data-lucide="clipboard-check"></i><span class="link-text">Attend</span></a>
+    <a href="leader-reports.html" class="bn-item" title="Reports"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
+    <a href="#" class="bn-item" id="bn-logout" title="Logout"><i data-lucide="log-out"></i><span class="link-text">Logout</span></a>
+  </div>
+</nav>
+
+<script src="utils.js"></script>
+<script src="theme.js"></script>
+<script src="auth.js"></script>
+<script src="data.js"></script>
+<script src="components.js"></script>
+
+<script>
+  const session = requireRole("cell_leader");
+  const cellId = session ? (session.cellId || null) : null;
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!session) return;
+    initProfileMenu("profile-menu-slot", session);
+
+    function goLogout() { confirmAction("Are you sure you want to end your current session?", logout, { title: "Sign out?", confirmLabel: "Sign Out" }); }
+    document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
+    document.getElementById("bn-logout").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
+
+    if (!cellId) {
+      const banner = document.getElementById("no-cell-banner");
+      if (banner) banner.style.display = "block";
+    }
+
+    let membersCache = cellId ? getMembers(cellId) : [];
+    document.getElementById("m-stage").innerHTML = GROWTH_STAGES.map(s => `<option value="${s}">${s}</option>`).join("");
+
+    function renderMembers() {
+      const search = document.getElementById("search-input").value.toLowerCase();
+      const statusFilter = document.getElementById("filter-status").value;
+      const filtered = membersCache.filter(m =>
+        (!search || m.name.toLowerCase().includes(search)) &&
+        (!statusFilter || m.status === statusFilter)
+      );
+      const body = document.getElementById("members-body");
+      if (!filtered.length) {
+        body.innerHTML = `<tr><td colspan="8"><div class="empty-state"><h4>No members found</h4><p>${membersCache.length ? "Try a different search or filter." : "Add your first member to get started."}</p></div></td></tr>`;
+        return;
+      }
+      body.innerHTML = filtered.map(m => `
+        <tr>
+          <td style="font-weight:600; color:var(--ink-900);">${m.name}</td>
+          <td>${m.phone || "—"}</td>
+          <td>${m.gender || "—"}</td>
+          <td>${m.joinDate ? formatDate(m.joinDate) : "—"}</td>
+          <td><span class="badge ${statusBadgeClass(m.status)}">${m.status}</span></td>
+          <td>${m.growthStage}</td>
+          <td>${m.attendanceRate}%</td>
+          <td class="u-flex u-gap-8">
+            <button class="btn btn-secondary btn-sm" onclick="viewMember('${m.id}')">View</button>
+            <button class="btn btn-secondary btn-sm" onclick="editMember('${m.id}')">Edit</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    window.openAddMemberModal = function () {
+      if (!cellId) { showToast("You need a cell before adding members.", "error"); return; }
+      document.getElementById("member-modal-title").textContent = "Add Member";
+      document.getElementById("member-form").reset();
+      document.getElementById("member-id").value = "";
+      document.getElementById("m-status").value = "Active";
+      document.getElementById("m-stage").value = "Joined Cell";
+      openModal("member-modal");
+    };
+
+    window.editMember = function (id) {
+      const m = getMemberById(id);
+      if (!m) return;
+      document.getElementById("member-modal-title").textContent = "Edit Member";
+      document.getElementById("member-id").value = m.id;
+      document.getElementById("m-name").value = m.name;
+      document.getElementById("m-phone").value = m.phone || "";
+      document.getElementById("m-email").value = m.email || "";
+      document.getElementById("m-gender").value = m.gender || "Male";
+      document.getElementById("m-joined").value = m.joinDate || "";
+      document.getElementById("m-stage").value = m.growthStage;
+      document.getElementById("m-status").value = m.status;
+      document.getElementById("m-notes").value = m.notes || "";
+      openModal("member-modal");
+    };
+
+    window.viewMember = function (id) {
+      const m = getMemberById(id);
+      if (!m) return;
+      document.getElementById("view-member-body").innerHTML = `
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:20px;">
+          <div class="side-avatar" style="width:52px;height:52px;font-size:18px; color:#fff;">${initials(m.name)}</div>
+          <div><h3 style="font-size:17px;">${m.name}</h3><span class="badge ${statusBadgeClass(m.status)}">${m.status}</span></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;">
+          <div><div class="summary-label">Phone</div><div style="font-weight:600;">${m.phone || "—"}</div></div>
+          <div><div class="summary-label">Email</div><div style="font-weight:600;">${m.email || "—"}</div></div>
+          <div><div class="summary-label">Gender</div><div style="font-weight:600;">${m.gender || "—"}</div></div>
+          <div><div class="summary-label">Date Joined</div><div style="font-weight:600;">${m.joinDate ? formatDate(m.joinDate) : "—"}</div></div>
+          <div><div class="summary-label">Attendance Rate</div><div style="font-weight:600;">${m.attendanceRate}%</div></div>
+          <div><div class="summary-label">Growth Stage</div><div style="font-weight:600;">${m.growthStage}</div></div>
+        </div>
+        <div class="summary-label" style="margin-bottom:6px;">Growth Timeline</div>
+        <div class="u-flex u-gap-8" style="flex-wrap:wrap; margin-bottom:18px;">
+          ${GROWTH_STAGES.map(s => `<span class="badge ${s === m.growthStage ? "badge-active" : "badge-pending"}">${s}</span>`).join("")}
+        </div>
+        ${m.notes ? `<div class="summary-label" style="margin-bottom:6px;">Notes</div><p style="font-size:13.5px;">${m.notes}</p>` : ""}
+      `;
+      openModal("view-member-modal");
+    };
+
+    document.getElementById("search-input").addEventListener("input", renderMembers);
+    document.getElementById("filter-status").addEventListener("change", renderMembers);
+
+    document.getElementById("member-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const id = document.getElementById("member-id").value;
+      const data = {
+        name: document.getElementById("m-name").value.trim(),
+        phone: document.getElementById("m-phone").value.trim(),
+        email: document.getElementById("m-email").value.trim(),
+        gender: document.getElementById("m-gender").value,
+        joinDate: document.getElementById("m-joined").value,
+        growthStage: document.getElementById("m-stage").value,
+        status: document.getElementById("m-status").value,
+        notes: document.getElementById("m-notes").value.trim()
+      };
+      if (!data.name) { showToast("Please enter the member's name.", "error"); return; }
+
+      if (id) {
+        updateMember(id, data);
+        showToast("Member updated successfully.", "success");
+      } else {
+        data.cellId = cellId;
+        addMember(data);
+        showToast("Member added successfully.", "success");
+      }
+      membersCache = getMembers(cellId);
+      renderMembers();
+      closeModal("member-modal");
+    });
+
+    if (cellId) {
+      document.getElementById("members-content").style.display = "";
+      renderMembers();
+    } else {
+      document.getElementById("members-content").style.display = "none";
+    }
+
+    lucide.createIcons();
+  });
+</script>
+</body>
+</html>

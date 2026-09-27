@@ -4,6 +4,18 @@ All files are flat in this one folder — no subfolders — so it can be deploye
 
 ## Recent fixes
 
+- **The entire Cell Leader portal is now real and fully working** — every sidebar link, bottom-nav item, and dashboard quick action leads to an actual functional page. Nothing says "not available" anymore on the Cell Leader side:
+  - `leader-cell.html` — cell details + member list
+  - `leader-members.html` — search/filter, Add/Edit member (modal), View member profile (modal), real validation
+  - `leader-attendance.html` — mark present/absent/excused per member, Mark All Present, visitors/first-timers, saves and shows history
+  - `leader-offerings.html` — record an offering, view history
+  - `leader-growth.html` — growth-stage donut chart, attendance trend chart, key stats
+  - `leader-activities.html` — Add Activity modal, card grid of logged activities
+  - `leader-reports.html` — weekly report form + history
+  - `leader-notifications.html` — real, data-driven notifications (e.g. "your report is due" only shows if it's actually not submitted yet — nothing fake)
+  - `leader-settings.html` — profile info, dark-mode toggle, a working reminders preference
+  All of them read/write through the same `data.js` functions as the dashboard, respect the "no cell yet" empty state, and share the exact same sidebar/topbar/nav chrome.
+- **Removed pink from the dashboard stat cards** — they now cycle through blue and green only (Offering and Activities on the Cell Leader dashboard, Total Members and Total Offering on the Admin dashboard were reassigned).
 - **Full rename to Campus Ministry BLW Zone B**: this build is scoped to one zone within Christ Embassy Campus Ministry, not the whole ministry — updated everywhere the old "Cell Ministry" / "Christ Embassy Campus Ministry" branding appeared (nav, sidebars, page titles, hero, persona sections, footer, login/register).
 - **Hero cleanup**: removed the pill/box background behind the hero eyebrow text (it's now plain styled text), and removed the "Access Dashboard" / "Explore Features" buttons from the hero.
 - **Blurry cell-meeting photo removed**: replaced with a self-contained animated "People → Cell → Growth" visual (SVG connection lines + floating member chips + a pulsing "Cell" core), so there's no photo left to go blurry on any screen size.
@@ -35,6 +47,7 @@ All files are flat in this one folder — no subfolders — so it can be deploye
 - **Login** (`login.html`) — simplified centered card, role selector (Cell Leader / Administrator), show/hide password, loading + success state, inline validation, forgot-password modal (honest "not connected yet" message, no fake reset), "Continue with Google" button (shows an honest message — no fake success; wire up a real OAuth provider later), link to registration.
 - **Registration** (`register.html`) — Cell Leader signups pick a real Group → Chapter (cascading selects) and name their cell; Administrator signups skip those fields. Validates required fields, email format, password match/length, and duplicate email. **A Cell Leader registration actually creates a real cell + leader record**, so the new account's dashboard is immediately populated instead of empty.
 - **Cell Leader Dashboard** (`leader-dashboard.html`) — dynamic greeting with rotating tips, profile dropdown (avatar/name/role → Profile, Account Settings, Help, Sign Out), 5 summary cards, attendance trend chart, recent activities, quick actions. Shows a clean empty state if no cell is linked yet.
+- **Cell Leader portal, fully working** — My Cell, Members, Attendance, Offerings, Growth, Activities, Reports, Notifications and Settings are all real, functional pages (see the changelog entry above for details on each).
 - **Administrator Dashboard** (`admin-dashboard.html`) — greeting + rotating tip, profile dropdown, ministry-wide stats (cells, leaders, members, average attendance, total offering, groups, chapters, reports submitted), cells-by-chapter bar chart, cell-status donut, "cells needing attention" table — all with graceful empty states since no cells exist yet.
 - **Admin → Groups** (`admin-groups.html`) — the 5 real groups as cards with live stats, linking into:
 - **Admin → Group detail** (`admin-group-detail.html?group=<id>`) — real chapters for that group with per-chapter cell/member counts.
@@ -59,14 +72,13 @@ Cells, leaders and members are **not yet supplied**, so those arrays start empty
 
 ## Still to build (next stages)
 
-This stage focused on the foundation (real data, auth, dark mode, dashboards, Groups). Still queued, in roughly this order:
+The Cell Leader side is now fully built. Still queued, in roughly this order:
 
-- Cell Leader: My Cell, Members (+ Member Profile), Attendance, Offerings, Growth, Activities, Reports, Notifications, Settings, Profile
 - Admin: Chapter detail, Cells, Cell Leaders, Members, Attendance, Offerings, Growth, Activities, Reports, Analytics, Notifications, Settings, Profile
 - "Complete Your Profile" onboarding step for Google sign-in, once a real OAuth provider is connected
 - A working "+ Add Cell" flow from the Group/Chapter detail pages
 
-Every sidebar/bottom-nav link to a page that isn't built yet shows a small "This section isn't available yet" toast rather than a dead link or a "Coming Soon" label.
+Every sidebar/bottom-nav link on the Admin side to a page that isn't built yet shows a small "This section isn't available yet" toast rather than a dead link or a "Coming Soon" label.
 
 ## Data architecture
 

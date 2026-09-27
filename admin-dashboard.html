@@ -132,7 +132,7 @@
     <a href="admin-groups.html" class="bn-item"><i data-lucide="network"></i><span class="link-text">Groups</span></a>
     <a href="admin-reports.html" class="bn-item soon"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
     <a href="admin-analytics.html" class="bn-item soon"><i data-lucide="bar-chart-3"></i><span class="link-text">Analytics</span></a>
-    <a href="#" class="bn-item" id="bn-logout"><i data-lucide="log-out"></i> Logout</a>
+    <a href="#" class="bn-item" id="bn-logout" title="Logout"><i data-lucide="log-out"></i><span class="link-text">Logout</span></a>
   </div>
 </nav>
 
@@ -217,16 +217,16 @@
     const cards = [
       { icon: "users-round", tone: "royal", value: cells.length, label: "Total Cells" },
       { icon: "user-check", tone: "royal", value: leaders.length, label: "Total Leaders" },
-      { icon: "users", tone: "pink", value: members.length, label: "Total Members" },
+      { icon: "users", tone: "royal", value: members.length, label: "Total Members" },
       { icon: "trending-up", tone: "success", value: avgAttendance + "%", label: "Average Attendance" },
-      { icon: "hand-coins", tone: "pink", value: formatNaira(totalOffering), label: "Total Offering" },
+      { icon: "hand-coins", tone: "success", value: formatNaira(totalOffering), label: "Total Offering" },
       { icon: "network", tone: "royal", value: groups.length, label: isGroupAdmin ? "Your Group" : "Total Groups" },
       { icon: "building-2", tone: "royal", value: chapters.length, label: "Total Chapters" },
       { icon: "file-text", tone: "success", value: reportsSubmitted, label: "Reports Submitted" }
     ];
 
     document.getElementById("summary-grid").innerHTML = cards.map(c => `
-      <div class="card summary-card">
+      <div class="card summary-card tone-${c.tone}">
         <div class="summary-top">
           <div class="summary-icon tone-${c.tone}"><i data-lucide="${c.icon}"></i></div>
         </div>
