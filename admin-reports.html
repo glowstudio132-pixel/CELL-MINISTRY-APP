@@ -12,12 +12,13 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Groups — Campus Ministry BLW Zone B</title>
+<title>Reports — Campus Ministry BLW Zone B</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="components.css">
 <link rel="stylesheet" href="responsive.css">
 <script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+
 </head>
 <body>
 
@@ -44,7 +45,7 @@
       <a href="admin-offerings.html" class="side-link" title="Offerings"><i data-lucide="hand-coins"></i><span class="link-text">Offerings</span></a>
       <a href="admin-growth.html" class="side-link" title="Growth"><i data-lucide="trending-up"></i><span class="link-text">Growth</span></a>
       <a href="admin-activities.html" class="side-link" title="Activities"><i data-lucide="calendar-heart"></i><span class="link-text">Activities</span></a>
-      <a href="admin-reports.html" class="side-link" title="Reports"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
+      <a href="admin-reports.html" class="side-link active" title="Reports"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
       <a href="admin-analytics.html" class="side-link" title="Analytics"><i data-lucide="bar-chart-3"></i><span class="link-text">Analytics</span></a>
       <div class="side-label">Account</div>
       <a href="admin-notifications.html" class="side-link" title="Notifications"><i data-lucide="bell"></i><span class="link-text">Notifications</span></a>
@@ -62,8 +63,8 @@
       <div class="u-flex u-center u-gap-16">
         <button class="menu-toggle" aria-label="Open menu"><span></span><span></span><span></span></button>
         <div class="topbar-title">
-          <h1>Groups</h1>
-          <p>All ministry groups and their chapters.</p>
+          <h1>Reports</h1>
+          <p>Weekly reports submitted across your scope.</p>
         </div>
       </div>
       <div class="topbar-actions">
@@ -71,22 +72,36 @@
           <i data-lucide="moon" class="theme-icon-light"></i>
           <i data-lucide="sun" class="theme-icon-dark"></i>
         </button>
+        <button class="icon-btn" aria-label="Notifications" onclick="window.location.href='admin-notifications.html'">
+          <i data-lucide="bell"></i><span class="notif-dot"></span>
+        </button>
         <div id="profile-menu-slot"></div>
       </div>
     </div>
 
     <div class="page-body">
-      <div class="group-grid" id="group-grid"></div>
+<div class="panel">
+        <div class="panel-head" style="flex-wrap:wrap; gap:12px;">
+          <h3>Reports</h3>
+          <select class="select" id="filter-status" style="width:160px;"><option value="">All statuses</option><option>Submitted</option><option>Reviewed</option><option>Pending</option></select>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Week Of</th><th>Cell</th><th>Attendance</th><th>Offering</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="reports-body"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </main>
 </div>
 
 <nav class="bottom-nav">
   <div class="bottom-nav-inner">
-    <a href="admin-dashboard.html" class="bn-item"><i data-lucide="layout-dashboard"></i><span class="link-text">Home</span></a>
-    <a href="admin-groups.html" class="bn-item active"><i data-lucide="network"></i><span class="link-text">Groups</span></a>
-    <a href="admin-reports.html" class="bn-item"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
-    <a href="admin-analytics.html" class="bn-item"><i data-lucide="bar-chart-3"></i><span class="link-text">Analytics</span></a>
+    <a href="admin-dashboard.html" class="bn-item" title="Home"><i data-lucide="layout-dashboard"></i><span class="link-text">Home</span></a>
+    <a href="admin-groups.html" class="bn-item" title="Groups"><i data-lucide="network"></i><span class="link-text">Groups</span></a>
+    <a href="admin-reports.html" class="bn-item active" title="Reports"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
+    <a href="admin-analytics.html" class="bn-item" title="Analytics"><i data-lucide="bar-chart-3"></i><span class="link-text">Analytics</span></a>
     <a href="#" class="bn-item" id="bn-logout" title="Logout"><i data-lucide="log-out"></i><span class="link-text">Logout</span></a>
   </div>
 </nav>
@@ -96,38 +111,64 @@
 <script src="auth.js"></script>
 <script src="data.js"></script>
 <script src="components.js"></script>
+
 <script>
   const session = requireRole("administrator");
 
   document.addEventListener("DOMContentLoaded", () => {
     if (!session) return;
-
     initProfileMenu("profile-menu-slot", session);
 
     function goLogout() { confirmAction("Are you sure you want to end your current session?", logout, { title: "Sign out?", confirmLabel: "Sign Out" }); }
     document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
     document.getElementById("bn-logout").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
 
-    const groups = (session.adminType === "group_admin" && session.groupId)
-      ? getGroups().filter(g => g.id === session.groupId)
-      : getGroups();
-    document.getElementById("group-grid").innerHTML = groups.map(g => {
-      const stats = getGroupStats(g.id);
-      return `
-        <div class="card group-card" onclick="window.location.href='admin-group-detail.html?group=${g.id}'">
-          <div class="group-card-top">
-            <div class="summary-icon tone-royal"><i data-lucide="network"></i></div>
-            <i data-lucide="chevron-right" style="width:18px; height:18px; color:var(--ink-400);"></i>
-          </div>
-          <h3>${g.name}</h3>
-          <p style="font-size:13px;">${stats.chapterCount} chapters</p>
-          <div class="group-card-stats">
-            <div class="group-stat"><b>${stats.cellCount}</b>Cells</div>
-            <div class="group-stat"><b>${stats.memberCount}</b>Members</div>
-            <div class="group-stat"><b>${stats.avgAttendance}%</b>Attendance</div>
-          </div>
-        </div>`;
-    }).join("");
+    // ---------- Scope: a Group Administrator only sees their own group ----------
+    const isGroupAdmin = session.adminType === "group_admin" && session.groupId;
+    const scopeGroups = isGroupAdmin ? getGroups().filter(g => g.id === session.groupId) : getGroups();
+    const scopeGroupIds = scopeGroups.map(g => g.id);
+    const scopeChapters = getChapters().filter(ch => scopeGroupIds.includes(ch.groupId));
+    const scopeChapterIds = scopeChapters.map(ch => ch.id);
+    const scopeCells = getCells().filter(c => scopeChapterIds.includes(c.chapterId));
+    const scopeCellIds = scopeCells.map(c => c.id);
+    const scopeLeaders = getLeaders().filter(l => scopeCellIds.includes(l.cellId));
+    const scopeMembers = getMembers().filter(m => scopeCellIds.includes(m.cellId));
+    const scopeOfferings = getOfferings().filter(o => scopeCellIds.includes(o.cellId));
+    const scopeActivities = getActivities().filter(a => scopeCellIds.includes(a.cellId));
+    const scopeReports = getReports().filter(r => scopeCellIds.includes(r.cellId));
+
+    const allReports = scopeReports.map(r => Object.assign({}, r, { cellName: (getCellById(r.cellId) || {}).name || "—" }))
+      .sort((a, b) => new Date(b.weekOf) - new Date(a.weekOf));
+
+    function renderReports() {
+      const statusFilter = document.getElementById("filter-status").value;
+      const filtered = allReports.filter(r => !statusFilter || r.status === statusFilter);
+      const body = document.getElementById("reports-body");
+      if (!filtered.length) {
+        body.innerHTML = `<tr><td colspan="6"><div class="empty-state"><h4>No reports submitted yet</h4></div></td></tr>`;
+        return;
+      }
+      body.innerHTML = filtered.map(r => `
+        <tr>
+          <td style="font-weight:600; color:var(--ink-900);">${formatDate(r.weekOf)}</td>
+          <td>${r.cellName}</td>
+          <td>${r.attendance}</td>
+          <td>${formatNaira(r.offering)}</td>
+          <td><span class="badge ${statusBadgeClass(r.status)}">${r.status}</span></td>
+          <td>${r.status !== "Reviewed" ? `<button class="btn btn-secondary btn-sm" onclick="markReviewed('${r.id}')">Mark Reviewed</button>` : "—"}</td>
+        </tr>`).join("");
+    }
+    document.getElementById("filter-status").addEventListener("change", renderReports);
+
+    window.markReviewed = function (id) {
+      updateReport(id, { status: "Reviewed" });
+      const r = allReports.find(rep => rep.id === id);
+      if (r) r.status = "Reviewed";
+      showToast("Report marked as reviewed.", "success");
+      renderReports();
+    };
+
+    renderReports();
 
     lucide.createIcons();
   });

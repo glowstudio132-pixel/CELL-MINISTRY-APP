@@ -178,6 +178,22 @@ function addCell(cell) {
   return record;
 }
 
+function updateCell(id, changes) {
+  const c = getCellById(id);
+  if (!c) return null;
+  Object.assign(c, changes);
+  saveData(demoData);
+  return c;
+}
+
+function updateReport(id, changes) {
+  const r = demoData.reports.find(rep => rep.id === id);
+  if (!r) return null;
+  Object.assign(r, changes);
+  saveData(demoData);
+  return r;
+}
+
 function addLeader(leader) {
   const id = "leader_" + Date.now().toString(36);
   const record = Object.assign({ id }, leader);

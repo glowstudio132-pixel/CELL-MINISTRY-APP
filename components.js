@@ -99,14 +99,17 @@ function initProfileMenu(containerId, user) {
     link.addEventListener("click", (e) => {
       e.preventDefault();
       const action = link.getAttribute("data-action");
+      const settingsPage = user.role === "administrator" ? "admin-settings.html" : "leader-settings.html";
       if (action === "logout") {
         confirmAction(
           "Are you sure you want to end your current session?",
           logout,
           { title: "Sign out?", confirmLabel: "Sign Out" }
         );
-      } else {
-        showToast("This isn't available yet.", "success");
+      } else if (action === "profile" || action === "settings") {
+        window.location.href = settingsPage;
+      } else if (action === "help") {
+        window.location.href = "help.html";
       }
     });
   });

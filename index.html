@@ -58,41 +58,87 @@
   </div>
 </header>
 
-<!-- ============ HERO ============ -->
-<section class="hero hero-centered" id="home">
-  <div class="container">
-    <div id="about" class="hero-centered-inner">
-      <div class="hero-accent hero-accent-1"><i data-lucide="heart-handshake"></i></div>
-      <div class="hero-accent hero-accent-2"><i data-lucide="clipboard-check"></i></div>
-      <div class="hero-accent hero-accent-3"><i data-lucide="sparkles"></i></div>
-      <div class="hero-accent hero-accent-4"><i data-lucide="trending-up"></i></div>
+<!-- ============ ANNOUNCEMENT ============ -->
+<div class="announcement-bar">✦ New here? <a href="register.html">Register your cell in a couple of minutes</a> — real groups, real chapters.</div>
 
-      <p class="hero-eyebrow-text">✦ Campus Ministry BLW Zone B</p>
-      <h1 class="hero-mega">Empowering every cell.<br>Tracking every growth.</h1>
+<!-- ============ HERO ============ -->
+<section class="hero" id="home">
+  <div class="container hero-split">
+    <div id="about" class="hero-copy reveal">
+      <span class="sticker-badge sticker-blue">✦ Campus Ministry BLW Zone B</span>
+      <h1>Empowering every cell.<br>Tracking every <span class="hero-underline">growth<svg viewBox="0 0 120 12" xmlns="http://www.w3.org/2000/svg"><path d="M2 8c15-6 30-6 40 0s30 6 40 0 25-6 36 0" stroke="var(--pop-pink)" stroke-width="3" fill="none" stroke-linecap="round"/></svg></span>.</h1>
       <p class="hero-sub">A simple digital platform for managing cells, members, attendance, activities and growth across Campus Ministry BLW Zone B.</p>
-      <p class="hero-stat-line">Built for 5 groups and 26 chapters across Campus Ministry BLW Zone B</p>
+      <div class="hero-actions">
+        <a href="login.html" class="btn btn-primary"><i data-lucide="layout-dashboard"></i> Get Started</a>
+        <a href="#benefits" class="btn btn-secondary"><i data-lucide="play-circle"></i> See how it works</a>
+      </div>
+    </div>
+    <div class="hero-collage reveal">
+      <div class="hero-accent hero-accent-1"><i data-lucide="heart-handshake"></i></div>
+      <div class="hero-accent hero-accent-2"><i data-lucide="sparkles"></i></div>
+      <div class="collage-tile collage-tile-1"><i data-lucide="users-round"></i></div>
+      <div class="collage-tile collage-tile-2"><i data-lucide="clipboard-check"></i></div>
+      <div class="collage-tile collage-tile-3"><i data-lucide="hand-coins"></i></div>
+      <div class="collage-tile collage-tile-4"><i data-lucide="trending-up"></i></div>
     </div>
   </div>
 </section>
 
-<!-- ============ INTRO CARDS ============ -->
-<div class="intro-cards">
-  <div class="intro-card tone-a">
-    <div class="intro-card-icon"><i data-lucide="users-round"></i></div>
-    <h4>Built for real cells</h4>
-    <p>Every group and chapter here is the real ministry structure — nothing invented, nothing generic.</p>
-  </div>
-  <div class="intro-card tone-b">
-    <div class="intro-card-icon"><i data-lucide="trending-up"></i></div>
-    <h4>Growth you can see</h4>
-    <p>Attendance, offerings and member growth roll up automatically, from cell to chapter to group.</p>
+<!-- ============ MARQUEE ============ -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track" id="marquee-track"></div>
+</div>
+
+<!-- ============ STAT BAND ============ -->
+<div class="stat-band">
+  <div class="stat-band-inner">
+    <div class="reveal">
+      <div class="stat-band-number" data-count="5">0</div>
+      <div class="stat-band-label">Groups</div>
+    </div>
+    <div class="reveal" style="transition-delay:0.1s;">
+      <div class="stat-band-number" data-count="26" data-suffix="+">0</div>
+      <div class="stat-band-label">Chapters</div>
+    </div>
   </div>
 </div>
+
+<!-- ============ BENEFITS ============ -->
+<section class="section" id="benefits">
+  <div class="container" style="text-align:center; margin-bottom: 36px;">
+    <span class="sticker-badge sticker-pink">WHY CHOOSE US</span>
+    <h2 class="bold-heading" style="font-size: clamp(28px, 4vw, 40px); margin: 18px 0 0;" id="features">Benefits of running your cell with us.</h2>
+  </div>
+  <div class="container">
+    <div class="benefits-grid">
+      <div class="benefit-card reveal">
+        <div class="benefit-icon c-blue"><i data-lucide="clipboard-check"></i></div>
+        <h4>Attendance in seconds</h4>
+        <p>Mark present, absent or excused with one tap, and watch the weekly trend build itself.</p>
+      </div>
+      <div class="benefit-card reveal" style="transition-delay:0.1s;">
+        <div class="benefit-icon c-pink"><i data-lucide="trending-up"></i></div>
+        <h4>Real growth tracking</h4>
+        <p>Six growth stages from Joined Cell to Cell Leader Candidate, so no one's progress gets lost.</p>
+      </div>
+      <div class="benefit-card reveal" style="transition-delay:0.2s;">
+        <div class="benefit-icon c-green"><i data-lucide="hand-coins"></i></div>
+        <h4>Clean offering records</h4>
+        <p>Log the type, amount and method in seconds — ready whenever it's needed for reporting.</p>
+      </div>
+      <div class="benefit-card reveal" style="transition-delay:0.3s;">
+        <div class="benefit-icon c-gold"><i data-lucide="shield-check"></i></div>
+        <h4>Admin oversight, built in</h4>
+        <p>Group and Zonal Administrators see exactly what needs attention, without chasing anyone.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- ============ MEETING VISUAL ============ -->
 <section class="section" style="padding-top: 0;">
   <div class="container">
-    <div class="panel-grid-2" style="gap: 56px; align-items:center;">
+    <div class="panel-grid-2 reveal" style="gap: 56px; align-items:center;">
       <div>
         <span class="sticker-badge sticker-blue">✦ Real cells, real growth</span>
         <h2 class="bold-heading" style="font-size: clamp(28px, 4vw, 40px); margin: 18px 0 16px;">This is what a cell looks like.</h2>
@@ -121,132 +167,23 @@
   </div>
 </section>
 
-<!-- ============ MARQUEE ============ -->
-<div class="marquee" aria-hidden="true">
-  <div class="marquee-track" id="marquee-track"></div>
-</div>
-
-<!-- ============ INSIGHTS ============ -->
-<section class="section">
-  <div class="container">
-    <div class="panel-grid-2" style="gap: 56px; align-items:center;">
-      <div>
-        <span class="sticker-badge sticker-green">#INSIGHTS</span>
-        <h2 class="bold-heading" style="font-size: clamp(30px, 4vw, 42px); margin: 18px 0 16px;">The data behind stronger cells.</h2>
-        <p style="font-size: 15.5px; max-width: 440px;">Every attendance mark, offering and activity rolls up automatically — so leaders spend less time compiling reports and more time with their members.</p>
-      </div>
-      <div class="card" style="padding:20px; border-radius:20px;">
-        <div class="u-flex u-gap-8" style="margin-bottom:16px;">
-          <span style="width:10px;height:10px;border-radius:50%;background:var(--pop-pink);"></span>
-          <span style="width:10px;height:10px;border-radius:50%;background:var(--pop-yellow);"></span>
-          <span style="width:10px;height:10px;border-radius:50%;background:var(--pop-lime);"></span>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-          <div class="card" style="padding:16px; box-shadow:none; border-color:var(--line-100);">
-            <div class="summary-label" style="margin-bottom:6px;">Cell Strength</div>
-            <div class="summary-value" style="font-size:22px;">24</div>
-          </div>
-          <div class="card" style="padding:16px; box-shadow:none; border-color:var(--line-100);">
-            <div class="summary-label" style="margin-bottom:6px;">Attendance</div>
-            <div class="summary-value" style="font-size:22px;">87.5%</div>
-          </div>
-          <div class="card" style="padding:16px; box-shadow:none; border-color:var(--line-100);">
-            <div class="summary-label" style="margin-bottom:6px;">Growth</div>
-            <div class="summary-value" style="font-size:22px;">+12%</div>
-          </div>
-          <div class="card" style="padding:16px; box-shadow:none; border-color:var(--line-100);">
-            <div class="summary-label" style="margin-bottom:6px;">Offering</div>
-            <div class="summary-value" style="font-size:22px;">₦45.5k</div>
-          </div>
-        </div>
-      </div>
+<!-- ============ FEATURE SPLIT ============ -->
+<section class="section" style="padding-top:0;">
+  <div class="container feature-split reverse reveal">
+    <div class="feature-visual tone-green">
+      <i data-lucide="bar-chart-3" class="icon-big"></i>
     </div>
-  </div>
-</section>
-
-<!-- ============ FEATURES ============ -->
-<section class="section" id="features">
-  <div class="container" style="text-align:center; margin-bottom: 24px;">
-    <span class="sticker-badge sticker-pink">#THEFEATURES</span>
-    <h2 class="bold-heading" style="font-size: clamp(30px, 4vw, 44px); margin: 18px 0 0;">Bring on the features.</h2>
-  </div>
-
-  <div class="block-panel blue">
-    <div class="block-copy">
-      <div class="block-eyebrow">01 · Attendance</div>
-      <h3>Take attendance in under a minute.</h3>
-      <p>Mark present, absent, excused, visitor or first-timer with one tap, and watch the weekly trend build itself.</p>
-    </div>
-    <div class="block-mock">
-      <div class="u-flex u-between u-center" style="margin-bottom:14px;">
-        <span style="font-weight:700; font-size:13px;">This week</span>
-        <span class="badge badge-active">21 / 24 present</span>
-      </div>
-      <div style="display:flex; gap:6px; align-items:flex-end; height:80px;">
-        <div style="flex:1; background:var(--pop-purple); border-radius:6px; height:55%;"></div>
-        <div style="flex:1; background:var(--pop-purple); border-radius:6px; height:70%;"></div>
-        <div style="flex:1; background:var(--pop-purple); border-radius:6px; height:60%;"></div>
-        <div style="flex:1; background:var(--pop-purple); border-radius:6px; height:85%;"></div>
-        <div style="flex:1; background:var(--pop-purple); border-radius:6px; height:90%;"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="block-panel pink reverse">
-    <div class="block-copy">
-      <div class="block-eyebrow">02 · Growth</div>
-      <h3>Watch members move from visitor to leader.</h3>
-      <p>Six growth stages, from Joined Cell to Cell Leader Candidate — so every leader knows exactly who's ready for the next step.</p>
-    </div>
-    <div class="block-mock">
-      <div style="display:flex; flex-direction:column; gap:10px;">
-        <div class="u-flex u-between u-center"><span style="font-size:13px;">Regular Attendee</span><span class="badge badge-pending">6</span></div>
-        <div class="u-flex u-between u-center"><span style="font-size:13px;">Active Member</span><span class="badge badge-pending">9</span></div>
-        <div class="u-flex u-between u-center"><span style="font-size:13px;">Worker</span><span class="badge badge-active">4</span></div>
-        <div class="u-flex u-between u-center"><span style="font-size:13px;">Cell Volunteer</span><span class="badge badge-active">3</span></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="block-panel green">
-    <div class="block-copy">
-      <div class="block-eyebrow">03 · Offerings</div>
-      <h3>Offering records, without the spreadsheet.</h3>
-      <p>Log the type, amount and method in seconds, and keep a clean history that's ready whenever it's needed for reporting.</p>
-    </div>
-    <div class="block-mock">
-      <div class="summary-label" style="margin-bottom:4px;">This week</div>
-      <div class="summary-value" style="font-size:28px; margin-bottom:14px;">₦45,500</div>
-      <div class="table-wrap" style="border:none;">
-        <table class="data-table" style="min-width:0;">
-          <tbody>
-            <tr><td style="padding:8px 0; border:none;">Cash</td><td style="padding:8px 0; border:none; text-align:right;">₦38,000</td></tr>
-            <tr><td style="padding:8px 0; border:none;">Transfer</td><td style="padding:8px 0; border:none; text-align:right;">₦7,500</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <div class="block-panel blue reverse">
-    <div class="block-copy">
-      <div class="block-eyebrow">04 · Reports</div>
-      <h3>Reports that roll up on their own.</h3>
-      <p>Every cell leader's weekly report flows up through chapter and group — so administrators always know where attention is needed.</p>
-    </div>
-    <div class="block-mock">
-      <div style="display:flex; flex-direction:column; gap:10px;">
-        <div class="u-flex u-between u-center"><span style="font-size:13px;">Grace Cell</span><span class="badge badge-active">Reviewed</span></div>
-        <div class="u-flex u-between u-center"><span style="font-size:13px;">Mercy Cell</span><span class="badge badge-pending">Submitted</span></div>
-        <div class="u-flex u-between u-center"><span style="font-size:13px;">Faith Cell</span><span class="badge badge-attention">Pending</span></div>
-      </div>
+    <div class="feature-copy">
+      <span class="sticker-badge sticker-green">✦ Reports</span>
+      <h2 class="bold-heading" style="font-size: clamp(28px, 4vw, 40px); margin: 18px 0 16px;">Reports that roll up on their own.</h2>
+      <p style="font-size: 15.5px; max-width: 420px;">Every cell leader's weekly report flows up through chapter and group automatically — so administrators always know where attention is needed, without chasing anyone down.</p>
     </div>
   </div>
 </section>
 
 <!-- ============ GROUPS ============ -->
 <section class="section" id="groups">
-  <div class="container" style="text-align:center;">
+  <div class="container reveal" style="text-align:center;">
     <span class="sticker-badge sticker-blue">#EVERYGROUP</span>
     <h2 class="bold-heading" style="font-size: clamp(28px, 4vw, 40px); margin: 18px 0 28px;">Built for every group.</h2>
     <div class="group-chip-grid" style="justify-content:center;" id="group-chip-grid">
@@ -260,7 +197,7 @@
 </section>
 
 <!-- ============ PERSONAS ============ -->
-<section class="persona-panel persona-blue">
+<section class="persona-panel persona-blue reveal">
   <div class="persona-avatar-wrap">
     <div class="persona-avatar"><i data-lucide="user-round"></i></div>
   </div>
@@ -272,7 +209,7 @@
   </div>
 </section>
 
-<section class="persona-panel persona-green reverse">
+<section class="persona-panel persona-green reverse reveal">
   <div class="persona-copy">
     <div class="block-eyebrow">Campus Ministry BLW Zone B for</div>
     <h2>Administrators</h2>
@@ -284,7 +221,7 @@
   </div>
 </section>
 
-<section class="persona-panel persona-pink">
+<section class="persona-panel persona-pink reveal">
   <div class="persona-avatar-wrap">
     <div class="persona-avatar has-photo">
       <img src="community-group.jpg" alt="Members of the ministry community" loading="lazy" />

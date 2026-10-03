@@ -375,6 +375,11 @@ table.data-table tbody tr:hover { background: var(--paper-50); }
   overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
 }
 
+/* Responsive 2-column grid, used for form field pairs and label/value
+   pairs; collapses to a single column on narrow phones. */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 560px) { .grid-2 { grid-template-columns: 1fr; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

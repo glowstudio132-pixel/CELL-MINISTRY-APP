@@ -4,6 +4,28 @@ All files are flat in this one folder — no subfolders — so it can be deploye
 
 ## Recent fixes
 
+- **Landing page reworked** against a reference layout you shared (bright split hero with a photo-style collage, a thin announcement bar, a full-bleed stat band, a compact benefits grid): new structure is Announcement → Nav → Split Hero (copy left, icon collage right, hand-drawn underline accent) → Marquee → Stat Band (5 Groups / 26+ Chapters) → Benefits grid (4 cards) → the animated "cell" visual → a Reports feature spotlight → Groups chips → the 3 persona sections → Footer. Dropped the old centered hero, the 2-card intro row, the "Insights" mini-dashboard, and the 4 full-bleed color panels — consolidated into the leaner structure above.
+- **Fixed the login-page gradient**: the soft color glows behind the card had no blur, so on a light background they read as hard-edged colored boxes rather than ambient light. Added `filter: blur(70px)` and simplified to solid colors — now a proper soft glow in both themes.
+- **Scroll animations added**: sections fade/slide into view as you scroll (`.reveal` class + an `IntersectionObserver` in `app.js`), with staggered delays on grid items like the benefit cards. Falls back to fully visible immediately if `IntersectionObserver` isn't supported — nothing stays permanently hidden.
+- **Frontend polish pass — all three deferred items closed out:**
+  - **Mobile form grids fixed**: several 2-column form/detail layouts (Record Offering, Submit Report, the Add/Edit Member and View Cell modals, the landing page's insight tiles) had no mobile fallback — a real bug, not just missing polish. Added a shared `.grid-2` utility (`style.css`) that collapses to one column under 560px, and swapped all five in.
+  - **Profile dropdown now goes somewhere real**: "Profile" and "Account Settings" in the top-right profile menu now open the correct Settings page for your role (`leader-settings.html` or `admin-settings.html`) instead of showing a toast.
+  - **New `help.html`**: a real FAQ page reachable from the profile dropdown on both sides, with role-specific questions (Cell Leader vs Administrator) plus shared ones (theme, sign out), and a "back to dashboard" link that adapts to your role — or to Sign In if you're logged out.
+  - **New `admin-chapter-detail.html`**: a proper chapter detail page (stats + the cells in that chapter, with a "Manage Cells" shortcut into the filtered Cells page) — clicking a chapter from a Group's page now lands here instead of jumping straight into the Cells table. Includes the same Group Administrator access guard as the Group detail page.
+- **Reverted the stat-card gradients back to clean, neutral cards** with just a subtle colored icon chip — the earlier full-gradient treatment read as too loud/childish.
+- **The entire Admin portal is now real and fully working**, respecting the same Group Administrator / Zonal Administrator scoping as the dashboard:
+  - `admin-cells.html` — filterable table, Add Cell (modal), View/Edit status (modal)
+  - `admin-leaders.html` — searchable table of every cell leader in scope
+  - `admin-members.html` — searchable, filterable table of every member in scope
+  - `admin-attendance.html` — aggregated attendance records + average rate across scope
+  - `admin-offerings.html` — aggregated offering records + total across scope
+  - `admin-growth.html` — growth-stage donut chart, cells-by-group bar chart
+  - `admin-activities.html` — card grid of every activity across scope
+  - `admin-reports.html` — filterable table with a real "Mark Reviewed" action
+  - `admin-analytics.html` — attendance trend, offering trend, reporting-compliance bar
+  - `admin-notifications.html` — real, data-driven (cells needing attention, pending report reviews, chapters with no cells — nothing fake)
+  - `admin-settings.html` — profile info (shows Group or Zonal scope), dark-mode toggle, reminders preference
+  Added `updateCell()` and `updateReport()` to `data.js` to support this. The existing Dashboard/Groups/Group-detail pages had their "not available yet" toasts replaced with real navigation (the notification bell, the dashboard's cell "View" button, and clicking a chapter row now all go to real pages — clicking a chapter even pre-filters the Cells page to it).
 - **The entire Cell Leader portal is now real and fully working** — every sidebar link, bottom-nav item, and dashboard quick action leads to an actual functional page. Nothing says "not available" anymore on the Cell Leader side:
   - `leader-cell.html` — cell details + member list
   - `leader-members.html` — search/filter, Add/Edit member (modal), View member profile (modal), real validation
@@ -72,13 +94,7 @@ Cells, leaders and members are **not yet supplied**, so those arrays start empty
 
 ## Still to build (next stages)
 
-The Cell Leader side is now fully built. Still queued, in roughly this order:
-
-- Admin: Chapter detail, Cells, Cell Leaders, Members, Attendance, Offerings, Growth, Activities, Reports, Analytics, Notifications, Settings, Profile
-- "Complete Your Profile" onboarding step for Google sign-in, once a real OAuth provider is connected
-- A working "+ Add Cell" flow from the Group/Chapter detail pages
-
-Every sidebar/bottom-nav link on the Admin side to a page that isn't built yet shows a small "This section isn't available yet" toast rather than a dead link or a "Coming Soon" label.
+The frontend is now feature-complete and polished. The only thing still queued is the "Complete Your Profile" onboarding step for Google sign-in, which is blocked on a real OAuth provider being connected — appropriate for the Supabase Auth stage next, not before.
 
 ## Data architecture
 

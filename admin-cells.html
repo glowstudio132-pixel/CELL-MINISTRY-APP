@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem("ceCampusTheme");
+    var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  } catch (e) {}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cells — Campus Ministry BLW Zone B</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="responsive.css">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand-row">
+      <a href="index.html" class="brand">
+        <img src="blw-logo.png" alt="Campus Ministry BLW Zone B" class="brand-logo" /> <span class="brand-text">Campus Ministry BLW Zone B</span>
+      </a>
+      <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" aria-label="Collapse sidebar" title="Collapse sidebar">
+        <i data-lucide="panel-left-close"></i>
+      </button>
+    </div>
+    <div class="side-scroll">
+      <div class="side-label">Administration</div>
+      <a href="admin-dashboard.html" class="side-link" title="Dashboard"><i data-lucide="layout-dashboard"></i><span class="link-text">Dashboard</span></a>
+      <a href="admin-groups.html" class="side-link" title="Groups"><i data-lucide="network"></i><span class="link-text">Groups</span></a>
+      <a href="admin-cells.html" class="side-link active" title="Cells"><i data-lucide="users-round"></i><span class="link-text">Cells</span></a>
+      <a href="admin-leaders.html" class="side-link" title="Cell Leaders"><i data-lucide="user-check"></i><span class="link-text">Cell Leaders</span></a>
+      <a href="admin-members.html" class="side-link" title="Members"><i data-lucide="users"></i><span class="link-text">Members</span></a>
+      <a href="admin-attendance.html" class="side-link" title="Attendance"><i data-lucide="clipboard-check"></i><span class="link-text">Attendance</span></a>
+      <a href="admin-offerings.html" class="side-link" title="Offerings"><i data-lucide="hand-coins"></i><span class="link-text">Offerings</span></a>
+      <a href="admin-growth.html" class="side-link" title="Growth"><i data-lucide="trending-up"></i><span class="link-text">Growth</span></a>
+      <a href="admin-activities.html" class="side-link" title="Activities"><i data-lucide="calendar-heart"></i><span class="link-text">Activities</span></a>
+      <a href="admin-reports.html" class="side-link" title="Reports"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
+      <a href="admin-analytics.html" class="side-link" title="Analytics"><i data-lucide="bar-chart-3"></i><span class="link-text">Analytics</span></a>
+      <div class="side-label">Account</div>
+      <a href="admin-notifications.html" class="side-link" title="Notifications"><i data-lucide="bell"></i><span class="link-text">Notifications</span></a>
+      <a href="admin-settings.html" class="side-link" title="Settings"><i data-lucide="settings"></i><span class="link-text">Settings</span></a>
+    </div>
+    <div class="side-foot">
+      <a href="#" class="side-link" id="logout-link"><i data-lucide="log-out"></i><span class="link-text">Logout</span></a>
+    </div>
+  </aside>
+  <div class="sidebar-overlay"></div>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="topbar">
+      <div class="u-flex u-center u-gap-16">
+        <button class="menu-toggle" aria-label="Open menu"><span></span><span></span><span></span></button>
+        <div class="topbar-title">
+          <h1>Cells</h1>
+          <p>Every cell in your scope, in one place.</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+          <i data-lucide="moon" class="theme-icon-light"></i>
+          <i data-lucide="sun" class="theme-icon-dark"></i>
+        </button>
+        <button class="icon-btn" aria-label="Notifications" onclick="window.location.href='admin-notifications.html'">
+          <i data-lucide="bell"></i><span class="notif-dot"></span>
+        </button>
+        <div id="profile-menu-slot"></div>
+      </div>
+    </div>
+
+    <div class="page-body">
+<div class="panel">
+        <div class="panel-head" style="flex-wrap:wrap; gap:12px;">
+          <h3>Cells</h3>
+          <div class="u-flex u-gap-12" style="flex-wrap:wrap;">
+            <select class="select" id="filter-chapter" style="width:200px;"><option value="">All chapters</option></select>
+            <select class="select" id="filter-status" style="width:160px;">
+              <option value="">All statuses</option>
+              <option>Active</option><option>Needs Attention</option><option>Pending Report</option><option>Inactive</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openAddCellModal()"><i data-lucide="plus" style="width:15px;height:15px;"></i> Add Cell</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Cell</th><th>Leader</th><th>Chapter</th><th>Group</th><th>Members</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="cells-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-overlay hidden" id="cell-modal">
+        <div class="modal">
+          <div class="modal-header"><h3 style="font-size:16px;">Add Cell</h3><button class="modal-close" onclick="closeModal('cell-modal')">&times;</button></div>
+          <div class="modal-body">
+            <form id="cell-form">
+              <div class="field"><label>Chapter</label><select class="select" id="c-chapter" required></select></div>
+              <div class="field"><label>Cell Name</label><input class="input" id="c-name" required /></div>
+              <div class="field"><label>Meeting Day</label><input class="input" id="c-day" placeholder="e.g. Wednesday" /></div>
+              <div class="field"><label>Meeting Time</label><input class="input" id="c-time" placeholder="e.g. 6:00 PM" /></div>
+              <div class="field"><label>Location</label><input class="input" id="c-location" /></div>
+              <button type="submit" class="btn btn-primary btn-block">Add Cell</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-overlay hidden" id="view-cell-modal">
+        <div class="modal">
+          <div class="modal-header"><h3 style="font-size:16px;">Cell Details</h3><button class="modal-close" onclick="closeModal('view-cell-modal')">&times;</button></div>
+          <div class="modal-body" id="view-cell-body"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="admin-dashboard.html" class="bn-item" title="Home"><i data-lucide="layout-dashboard"></i><span class="link-text">Home</span></a>
+    <a href="admin-groups.html" class="bn-item" title="Groups"><i data-lucide="network"></i><span class="link-text">Groups</span></a>
+    <a href="admin-reports.html" class="bn-item" title="Reports"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
+    <a href="admin-analytics.html" class="bn-item" title="Analytics"><i data-lucide="bar-chart-3"></i><span class="link-text">Analytics</span></a>
+    <a href="#" class="bn-item" id="bn-logout" title="Logout"><i data-lucide="log-out"></i><span class="link-text">Logout</span></a>
+  </div>
+</nav>
+
+<script src="utils.js"></script>
+<script src="theme.js"></script>
+<script src="auth.js"></script>
+<script src="data.js"></script>
+<script src="components.js"></script>
+
+<script>
+  const session = requireRole("administrator");
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!session) return;
+    initProfileMenu("profile-menu-slot", session);
+
+    function goLogout() { confirmAction("Are you sure you want to end your current session?", logout, { title: "Sign out?", confirmLabel: "Sign Out" }); }
+    document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
+    document.getElementById("bn-logout").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
+
+    // ---------- Scope: a Group Administrator only sees their own group ----------
+    const isGroupAdmin = session.adminType === "group_admin" && session.groupId;
+    const scopeGroups = isGroupAdmin ? getGroups().filter(g => g.id === session.groupId) : getGroups();
+    const scopeGroupIds = scopeGroups.map(g => g.id);
+    const scopeChapters = getChapters().filter(ch => scopeGroupIds.includes(ch.groupId));
+    const scopeChapterIds = scopeChapters.map(ch => ch.id);
+    const scopeCells = getCells().filter(c => scopeChapterIds.includes(c.chapterId));
+    const scopeCellIds = scopeCells.map(c => c.id);
+    const scopeLeaders = getLeaders().filter(l => scopeCellIds.includes(l.cellId));
+    const scopeMembers = getMembers().filter(m => scopeCellIds.includes(m.cellId));
+    const scopeOfferings = getOfferings().filter(o => scopeCellIds.includes(o.cellId));
+    const scopeActivities = getActivities().filter(a => scopeCellIds.includes(a.cellId));
+    const scopeReports = getReports().filter(r => scopeCellIds.includes(r.cellId));
+
+    document.getElementById("c-chapter").innerHTML = scopeChapters.map(ch => `<option value="${ch.id}">${ch.name}</option>`).join("");
+    document.getElementById("filter-chapter").innerHTML += scopeChapters.map(ch => `<option value="${ch.id}">${ch.name}</option>`).join("");
+
+    function renderCells() {
+      const chapterFilter = document.getElementById("filter-chapter").value;
+      const statusFilter = document.getElementById("filter-status").value;
+      const filtered = scopeCells.filter(c =>
+        (!chapterFilter || c.chapterId === chapterFilter) &&
+        (!statusFilter || c.status === statusFilter)
+      );
+      const body = document.getElementById("cells-body");
+      if (!filtered.length) {
+        body.innerHTML = `<tr><td colspan="7"><div class="empty-state"><h4>No cells found</h4><p>${scopeCells.length ? "Try a different filter." : "Add your first cell to get started."}</p></div></td></tr>`;
+        return;
+      }
+      body.innerHTML = filtered.map(c => {
+        const leader = getLeaderById(c.leaderId);
+        const chapter = scopeChapters.find(ch => ch.id === c.chapterId);
+        const group = scopeGroups.find(g => g.id === c.groupId);
+        const memberCount = getMembers(c.id).filter(m => m.status === "Active").length;
+        return `
+          <tr>
+            <td style="font-weight:600; color:var(--ink-900);">${c.name}</td>
+            <td>${leader ? leader.name : "Unassigned"}</td>
+            <td>${chapter ? chapter.name : "—"}</td>
+            <td>${group ? group.name : "—"}</td>
+            <td>${memberCount}</td>
+            <td><span class="badge ${statusBadgeClass(c.status)}">${c.status}</span></td>
+            <td><button class="btn btn-secondary btn-sm" onclick="viewCell('${c.id}')">View</button></td>
+          </tr>`;
+      }).join("");
+    }
+    document.getElementById("filter-chapter").addEventListener("change", renderCells);
+    document.getElementById("filter-status").addEventListener("change", renderCells);
+
+    window.openAddCellModal = function () {
+      if (!scopeChapters.length) { showToast("No chapters available in your scope.", "error"); return; }
+      document.getElementById("cell-form").reset();
+      openModal("cell-modal");
+    };
+
+    document.getElementById("cell-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const chapterId = document.getElementById("c-chapter").value;
+      const chapter = getChapterById(chapterId);
+      const name = document.getElementById("c-name").value.trim();
+      if (!name) { showToast("Please enter a cell name.", "error"); return; }
+      addCell({
+        chapterId, groupId: chapter.groupId, name,
+        meetingDay: document.getElementById("c-day").value.trim(),
+        meetingTime: document.getElementById("c-time").value.trim(),
+        location: document.getElementById("c-location").value.trim(),
+        status: "Active"
+      });
+      showToast("Cell added successfully.", "success");
+      closeModal("cell-modal");
+      window.location.reload();
+    });
+
+    window.viewCell = function (id) {
+      const c = getCellById(id);
+      if (!c) return;
+      const leader = getLeaderById(c.leaderId);
+      const chapter = scopeChapters.find(ch => ch.id === c.chapterId);
+      const group = scopeGroups.find(g => g.id === c.groupId);
+      const memberCount = getMembers(c.id).length;
+      document.getElementById("view-cell-body").innerHTML = `
+        <div class="grid-2" style="margin-bottom:18px;">
+          <div><div class="summary-label">Chapter</div><div style="font-weight:600;">${chapter ? chapter.name : "—"}</div></div>
+          <div><div class="summary-label">Group</div><div style="font-weight:600;">${group ? group.name : "—"}</div></div>
+          <div><div class="summary-label">Leader</div><div style="font-weight:600;">${leader ? leader.name : "Unassigned"}</div></div>
+          <div><div class="summary-label">Members</div><div style="font-weight:600;">${memberCount}</div></div>
+          <div><div class="summary-label">Meeting</div><div style="font-weight:600;">${c.meetingDay || "—"} ${c.meetingTime || ""}</div></div>
+          <div><div class="summary-label">Location</div><div style="font-weight:600;">${c.location || "—"}</div></div>
+        </div>
+        <div class="field"><label>Status</label>
+          <select class="select" id="edit-cell-status">
+            <option${c.status === "Active" ? " selected" : ""}>Active</option>
+            <option${c.status === "Needs Attention" ? " selected" : ""}>Needs Attention</option>
+            <option${c.status === "Pending Report" ? " selected" : ""}>Pending Report</option>
+            <option${c.status === "Inactive" ? " selected" : ""}>Inactive</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="saveCellStatus('${c.id}')">Save Status</button>
+      `;
+      openModal("view-cell-modal");
+    };
+
+    window.saveCellStatus = function (id) {
+      const status = document.getElementById("edit-cell-status").value;
+      updateCell(id, { status });
+      showToast("Cell updated successfully.", "success");
+      closeModal("view-cell-modal");
+      renderCells();
+    };
+
+    const chapterParam = new URLSearchParams(window.location.search).get("chapter");
+    if (chapterParam) document.getElementById("filter-chapter").value = chapterParam;
+
+    renderCells();
+
+    lucide.createIcons();
+  });
+</script>
+</body>
+</html>

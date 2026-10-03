@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem("ceCampusTheme");
+    var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  } catch (e) {}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Help — Campus Ministry BLW Zone B</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="responsive.css">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand">
+      <img src="blw-logo.png" alt="Campus Ministry BLW Zone B" class="brand-logo" />
+      <span class="brand-text-nav">Campus Ministry BLW Zone B</span>
+    </a>
+    <div class="nav-actions">
+      <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+        <i data-lucide="moon" class="theme-icon-light"></i>
+        <i data-lucide="sun" class="theme-icon-dark"></i>
+      </button>
+      <a href="#" class="btn btn-primary btn-sm" id="back-link"><i data-lucide="arrow-left" style="width:15px;height:15px;"></i> Back to Dashboard</a>
+    </div>
+  </div>
+</header>
+
+<div class="container" style="max-width: 760px; padding-top: 48px; padding-bottom: 80px;">
+  <div style="text-align:center; margin-bottom: 40px;">
+    <span class="sticker-badge sticker-blue">✦ Help</span>
+    <h1 class="bold-heading" style="font-size: clamp(28px, 4vw, 38px); margin: 18px 0 12px;">How can we help?</h1>
+    <p style="font-size: 15px; color: var(--ink-500);">Answers to common questions about using the app.</p>
+  </div>
+
+  <div id="faq-list" style="display:flex; flex-direction:column; gap:12px;"></div>
+
+  <div class="card" style="padding:24px; margin-top:28px; text-align:center;">
+    <h3 style="font-size:15px; margin-bottom:6px;">Still stuck?</h3>
+    <p style="font-size:13.5px; margin-bottom:0;">Reach out to your group or zonal administrator for further help.</p>
+  </div>
+</div>
+
+<script src="utils.js"></script>
+<script src="theme.js"></script>
+<script src="auth.js"></script>
+<script>
+  const session = requireAuth();
+
+  const FAQ_LEADER = [
+    { q: "How do I add a new member to my cell?", a: "Go to Members in the sidebar and click \"Add Member\". Fill in their details and save — they'll appear in your member list immediately." },
+    { q: "How do I take attendance?", a: "Go to Attendance, pick the date, mark each member Present, Absent or Excused, add any visitors or first-timers, then click \"Save Attendance\"." },
+    { q: "How do I record an offering?", a: "Go to Offerings, fill in the date, type, amount and payment method, then click \"Record Offering\". Your history updates right away." },
+    { q: "How do I submit my weekly report?", a: "Go to Reports, fill in the week's numbers and any notes, then click \"Submit Report\". Your administrator will review it from their side." },
+    { q: "What if I don't have a cell linked to my account yet?", a: "Most pages will show a short notice if no cell is linked. Contact your administrator, or register again and set up a cell during sign-up." }
+  ];
+
+  const FAQ_ADMIN = [
+    { q: "What's the difference between a Group Administrator and a Zonal Administrator?", a: "A Group Administrator only sees the one group they're assigned to. A Zonal Administrator sees all groups. This is set when the account is created and can't be changed from within the app yet." },
+    { q: "How do I add a cell?", a: "Go to Cells, click \"Add Cell\", choose the chapter it belongs to, and fill in the details." },
+    { q: "How do I review a submitted report?", a: "Go to Reports, find the report, and click \"Mark Reviewed\"." },
+    { q: "How do I see how a specific group is doing?", a: "Go to Groups and click into the group you want — you'll see its chapters and their cell/member counts." },
+    { q: "Why are some pages empty?", a: "Cells, members, attendance and reports only appear once cell leaders register and start using the app — nothing here is invented data." }
+  ];
+
+  const FAQ_COMMON = [
+    { q: "How do I switch between light and dark mode?", a: "Use the sun/moon icon in the top bar, or in Settings. Your choice is remembered next time you visit." },
+    { q: "How do I sign out?", a: "Click your profile in the top right and choose \"Sign Out\", or use Logout in the sidebar / bottom navigation." }
+  ];
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const backLink = document.getElementById("back-link");
+    let faqs = FAQ_COMMON;
+
+    if (!session) {
+      backLink.href = "login.html";
+      backLink.textContent = "";
+      backLink.innerHTML = '<i data-lucide="arrow-left" style="width:15px;height:15px;"></i> Sign In';
+    } else if (session.role === "administrator") {
+      backLink.href = "admin-dashboard.html";
+      faqs = FAQ_ADMIN.concat(FAQ_COMMON);
+    } else {
+      backLink.href = "leader-dashboard.html";
+      faqs = FAQ_LEADER.concat(FAQ_COMMON);
+    }
+
+    document.getElementById("faq-list").innerHTML = faqs.map((f, i) => `
+      <details class="card faq-item" style="padding:16px 20px;">
+        <summary style="cursor:pointer; font-weight:600; font-size:14px; color:var(--ink-900); list-style:none;">${f.q}</summary>
+        <p style="font-size:13.5px; margin-top:10px; color:var(--ink-500);">${f.a}</p>
+      </details>
+    `).join("");
+
+    lucide.createIcons();
+  });
+</script>
+</body>
+</html>

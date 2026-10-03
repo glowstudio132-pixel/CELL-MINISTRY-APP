@@ -12,12 +12,13 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Groups — Campus Ministry BLW Zone B</title>
+<title>Attendance — Campus Ministry BLW Zone B</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="components.css">
 <link rel="stylesheet" href="responsive.css">
 <script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+
 </head>
 <body>
 
@@ -40,7 +41,7 @@
       <a href="admin-cells.html" class="side-link" title="Cells"><i data-lucide="users-round"></i><span class="link-text">Cells</span></a>
       <a href="admin-leaders.html" class="side-link" title="Cell Leaders"><i data-lucide="user-check"></i><span class="link-text">Cell Leaders</span></a>
       <a href="admin-members.html" class="side-link" title="Members"><i data-lucide="users"></i><span class="link-text">Members</span></a>
-      <a href="admin-attendance.html" class="side-link" title="Attendance"><i data-lucide="clipboard-check"></i><span class="link-text">Attendance</span></a>
+      <a href="admin-attendance.html" class="side-link active" title="Attendance"><i data-lucide="clipboard-check"></i><span class="link-text">Attendance</span></a>
       <a href="admin-offerings.html" class="side-link" title="Offerings"><i data-lucide="hand-coins"></i><span class="link-text">Offerings</span></a>
       <a href="admin-growth.html" class="side-link" title="Growth"><i data-lucide="trending-up"></i><span class="link-text">Growth</span></a>
       <a href="admin-activities.html" class="side-link" title="Activities"><i data-lucide="calendar-heart"></i><span class="link-text">Activities</span></a>
@@ -62,8 +63,8 @@
       <div class="u-flex u-center u-gap-16">
         <button class="menu-toggle" aria-label="Open menu"><span></span><span></span><span></span></button>
         <div class="topbar-title">
-          <h1>Groups</h1>
-          <p>All ministry groups and their chapters.</p>
+          <h1>Attendance</h1>
+          <p>Attendance records across every cell in your scope.</p>
         </div>
       </div>
       <div class="topbar-actions">
@@ -71,22 +72,34 @@
           <i data-lucide="moon" class="theme-icon-light"></i>
           <i data-lucide="sun" class="theme-icon-dark"></i>
         </button>
+        <button class="icon-btn" aria-label="Notifications" onclick="window.location.href='admin-notifications.html'">
+          <i data-lucide="bell"></i><span class="notif-dot"></span>
+        </button>
         <div id="profile-menu-slot"></div>
       </div>
     </div>
 
     <div class="page-body">
-      <div class="group-grid" id="group-grid"></div>
+<div class="summary-grid" id="att-summary"></div>
+      <div class="panel">
+        <div class="panel-head"><h3>Attendance Records</h3></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Cell</th><th>Chapter</th><th>Present</th><th>Absent</th><th>Rate</th></tr></thead>
+            <tbody id="attendance-body"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </main>
 </div>
 
 <nav class="bottom-nav">
   <div class="bottom-nav-inner">
-    <a href="admin-dashboard.html" class="bn-item"><i data-lucide="layout-dashboard"></i><span class="link-text">Home</span></a>
-    <a href="admin-groups.html" class="bn-item active"><i data-lucide="network"></i><span class="link-text">Groups</span></a>
-    <a href="admin-reports.html" class="bn-item"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
-    <a href="admin-analytics.html" class="bn-item"><i data-lucide="bar-chart-3"></i><span class="link-text">Analytics</span></a>
+    <a href="admin-dashboard.html" class="bn-item" title="Home"><i data-lucide="layout-dashboard"></i><span class="link-text">Home</span></a>
+    <a href="admin-groups.html" class="bn-item" title="Groups"><i data-lucide="network"></i><span class="link-text">Groups</span></a>
+    <a href="admin-reports.html" class="bn-item" title="Reports"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
+    <a href="admin-analytics.html" class="bn-item" title="Analytics"><i data-lucide="bar-chart-3"></i><span class="link-text">Analytics</span></a>
     <a href="#" class="bn-item" id="bn-logout" title="Logout"><i data-lucide="log-out"></i><span class="link-text">Logout</span></a>
   </div>
 </nav>
@@ -96,38 +109,69 @@
 <script src="auth.js"></script>
 <script src="data.js"></script>
 <script src="components.js"></script>
+
 <script>
   const session = requireRole("administrator");
 
   document.addEventListener("DOMContentLoaded", () => {
     if (!session) return;
-
     initProfileMenu("profile-menu-slot", session);
 
     function goLogout() { confirmAction("Are you sure you want to end your current session?", logout, { title: "Sign out?", confirmLabel: "Sign Out" }); }
     document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
     document.getElementById("bn-logout").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
 
-    const groups = (session.adminType === "group_admin" && session.groupId)
-      ? getGroups().filter(g => g.id === session.groupId)
-      : getGroups();
-    document.getElementById("group-grid").innerHTML = groups.map(g => {
-      const stats = getGroupStats(g.id);
-      return `
-        <div class="card group-card" onclick="window.location.href='admin-group-detail.html?group=${g.id}'">
-          <div class="group-card-top">
-            <div class="summary-icon tone-royal"><i data-lucide="network"></i></div>
-            <i data-lucide="chevron-right" style="width:18px; height:18px; color:var(--ink-400);"></i>
-          </div>
-          <h3>${g.name}</h3>
-          <p style="font-size:13px;">${stats.chapterCount} chapters</p>
-          <div class="group-card-stats">
-            <div class="group-stat"><b>${stats.cellCount}</b>Cells</div>
-            <div class="group-stat"><b>${stats.memberCount}</b>Members</div>
-            <div class="group-stat"><b>${stats.avgAttendance}%</b>Attendance</div>
-          </div>
-        </div>`;
-    }).join("");
+    // ---------- Scope: a Group Administrator only sees their own group ----------
+    const isGroupAdmin = session.adminType === "group_admin" && session.groupId;
+    const scopeGroups = isGroupAdmin ? getGroups().filter(g => g.id === session.groupId) : getGroups();
+    const scopeGroupIds = scopeGroups.map(g => g.id);
+    const scopeChapters = getChapters().filter(ch => scopeGroupIds.includes(ch.groupId));
+    const scopeChapterIds = scopeChapters.map(ch => ch.id);
+    const scopeCells = getCells().filter(c => scopeChapterIds.includes(c.chapterId));
+    const scopeCellIds = scopeCells.map(c => c.id);
+    const scopeLeaders = getLeaders().filter(l => scopeCellIds.includes(l.cellId));
+    const scopeMembers = getMembers().filter(m => scopeCellIds.includes(m.cellId));
+    const scopeOfferings = getOfferings().filter(o => scopeCellIds.includes(o.cellId));
+    const scopeActivities = getActivities().filter(a => scopeCellIds.includes(a.cellId));
+    const scopeReports = getReports().filter(r => scopeCellIds.includes(r.cellId));
+
+    const avgRate = scopeCells.length
+      ? Math.round(scopeCells.reduce((sum, c) => sum + getAttendanceRate(c.id), 0) / scopeCells.length * 10) / 10
+      : 0;
+    const cellsWithRecords = scopeCells.filter(c => getLatestAttendance(c.id)).length;
+
+    document.getElementById("att-summary").innerHTML = [
+      { icon: "trending-up", tone: "success", value: avgRate + "%", label: "Average Attendance" },
+      { icon: "clipboard-check", tone: "royal", value: cellsWithRecords, label: "Cells Reporting" },
+      { icon: "users-round", tone: "royal", value: scopeCells.length, label: "Total Cells" }
+    ].map(c => `
+      <div class="card summary-card">
+        <div class="summary-top"><div class="summary-icon tone-${c.tone}"><i data-lucide="${c.icon}"></i></div></div>
+        <div class="summary-value">${c.value}</div>
+        <div class="summary-label">${c.label}</div>
+      </div>
+    `).join("");
+
+    const allAttendance = scopeCells.flatMap(c => getAttendance(c.id).map(a => Object.assign({}, a, { cellName: c.name, chapterId: c.chapterId })))
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const body = document.getElementById("attendance-body");
+    if (!allAttendance.length) {
+      body.innerHTML = `<tr><td colspan="6"><div class="empty-state"><h4>No attendance recorded yet</h4><p>Records will appear here once cell leaders take attendance.</p></div></td></tr>`;
+    } else {
+      body.innerHTML = allAttendance.map(a => {
+        const chapter = scopeChapters.find(ch => ch.id === a.chapterId);
+        return `
+          <tr>
+            <td style="font-weight:600; color:var(--ink-900);">${formatDate(a.date)}</td>
+            <td>${a.cellName}</td>
+            <td>${chapter ? chapter.name : "—"}</td>
+            <td>${a.present}</td>
+            <td>${a.absent}</td>
+            <td>${a.total ? Math.round((a.present / a.total) * 100) : 0}%</td>
+          </tr>`;
+      }).join("");
+    }
 
     lucide.createIcons();
   });

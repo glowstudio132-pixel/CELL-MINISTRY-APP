@@ -193,17 +193,21 @@
   content: "";
   position: absolute; top: -140px; right: -100px;
   width: 380px; height: 380px;
-  background: radial-gradient(circle, rgba(77,94,234,0.18), transparent 70%);
+  border-radius: 50%;
+  background: rgba(77,94,234,0.16);
+  filter: blur(70px);
   z-index: 0;
+  pointer-events: none;
 }
 .auth-page::after {
   content: "";
   position: absolute; bottom: -160px; left: -120px;
   width: 420px; height: 420px;
-  background:
-    radial-gradient(circle at 30% 30%, rgba(240,61,158,0.14), transparent 60%),
-    radial-gradient(circle at 70% 70%, rgba(28,154,108,0.14), transparent 60%);
+  border-radius: 50%;
+  background: rgba(240,61,158,0.12);
+  filter: blur(70px);
   z-index: 0;
+  pointer-events: none;
 }
 .auth-card-wrap { width: 100%; max-width: 400px; position: relative; z-index: 1; }
 .auth-top { text-align: center; margin-bottom: 28px; }
@@ -509,3 +513,97 @@
 }
 .persona-avatar.has-photo { padding: 0; overflow: hidden; border: 4px solid currentColor; background: none; }
 .persona-avatar.has-photo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+
+/* ============================================================
+   LANDING PAGE REWORK — announcement bar, split hero + collage,
+   full-bleed stat band, compact benefits grid, light feature-split
+   ============================================================ */
+.announcement-bar {
+  background: var(--pop-yellow);
+  color: var(--pop-black);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 16px;
+}
+.announcement-bar a { text-decoration: underline; }
+
+/* ---------- Split hero ---------- */
+.hero-split { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center; }
+.hero-copy .sticker-badge { margin-bottom: 18px; }
+.hero-copy h1 { font-size: clamp(38px, 5vw, 58px); line-height: 1.05; margin-bottom: 18px; }
+.hero-copy .hero-sub { max-width: 440px; margin-bottom: 28px; }
+.hero-underline { position: relative; white-space: nowrap; }
+.hero-underline svg { position: absolute; left: 0; bottom: -10px; width: 100%; height: 12px; }
+
+.hero-collage { position: relative; height: 420px; }
+.collage-tile {
+  position: absolute;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-lg);
+}
+.collage-tile svg, .collage-tile i { width: 42px; height: 42px; }
+.collage-tile-1 { top: 0; left: 6%; width: 168px; height: 168px; border-radius: 50%; background: var(--violet-100); color: var(--royal-700); }
+.collage-tile-2 { top: 8%; right: 0; width: 148px; height: 148px; border-radius: 28px; background: var(--pop-pink); color: #fff; }
+.collage-tile-3 { bottom: 10%; left: 0; width: 148px; height: 148px; border-radius: 28px; background: var(--pop-yellow); color: var(--pop-black); }
+.collage-tile-4 { bottom: 0; right: 8%; width: 168px; height: 168px; border-radius: 50%; background: var(--paper-0); border: 1px solid var(--line-200); color: var(--success-600); }
+.hero-collage .hero-accent { box-shadow: var(--shadow-md); }
+
+/* ---------- Full-bleed stat band ---------- */
+.stat-band { background: var(--royal-600); padding: 40px 24px; }
+.stat-band-inner {
+  max-width: 900px; margin: 0 auto;
+  display: flex; justify-content: space-around; flex-wrap: wrap; gap: 24px;
+  text-align: center;
+}
+.stat-band-number { font-family: var(--font-display); font-weight: 800; font-size: 34px; color: #fff; }
+.stat-band-label { font-size: 13px; color: rgba(255,255,255,0.78); margin-top: 4px; }
+
+/* ---------- Benefits grid ---------- */
+.benefits-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.benefit-card { padding: 24px; border-radius: 20px; border: 1px solid var(--line-200); background: var(--paper-0); transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.benefit-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.benefit-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+.benefit-icon svg { width: 19px; height: 19px; }
+.benefit-icon.c-blue { background: var(--violet-100); color: var(--royal-700); }
+.benefit-icon.c-pink { background: rgba(240,61,158,0.14); color: var(--pop-pink); }
+.benefit-icon.c-green { background: var(--success-100); color: var(--success-600); }
+.benefit-icon.c-gold { background: var(--gold-100); color: var(--gold-500); }
+.benefit-card h4 { font-size: 14.5px; margin-bottom: 6px; }
+.benefit-card p { font-size: 12.5px; }
+
+/* ---------- Light feature-split (visual + copy, alternating) ---------- */
+.feature-split { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; padding: 20px 0 60px; }
+.feature-split.reverse .feature-copy { order: 2; }
+.feature-split.reverse .feature-visual { order: 1; }
+.feature-visual {
+  background: var(--violet-100);
+  border-radius: 28px;
+  height: 320px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.feature-visual.tone-pink { background: rgba(240,61,158,0.12); }
+.feature-visual.tone-green { background: var(--success-100); }
+.feature-visual .icon-big { width: 88px; height: 88px; color: var(--royal-600); }
+.feature-visual.tone-pink .icon-big { color: var(--pop-pink); }
+.feature-visual.tone-green .icon-big { color: var(--success-600); }
+
+/* ---------- Scroll-reveal animation ---------- */
+.reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 900px) {
+  .hero-split { grid-template-columns: 1fr; }
+  .hero-collage { height: 320px; margin-top: 12px; }
+  .benefits-grid { grid-template-columns: repeat(2, 1fr); }
+  .feature-split, .feature-split.reverse { grid-template-columns: 1fr; padding: 16px 0 40px; }
+  .feature-split .feature-copy, .feature-split.reverse .feature-copy { order: 2; }
+  .feature-split .feature-visual, .feature-split.reverse .feature-visual { order: 1; }
+  .stat-band-number { font-size: 26px; }
+}
+@media (max-width: 560px) {
+  .benefits-grid { grid-template-columns: 1fr; }
+  .collage-tile { transform: scale(0.82); }
+  .feature-visual { height: 240px; }
+}

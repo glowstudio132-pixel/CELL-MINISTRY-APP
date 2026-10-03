@@ -12,7 +12,7 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Groups — Campus Ministry BLW Zone B</title>
+<title>Chapter — Campus Ministry BLW Zone B</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="components.css">
@@ -62,8 +62,7 @@
       <div class="u-flex u-center u-gap-16">
         <button class="menu-toggle" aria-label="Open menu"><span></span><span></span><span></span></button>
         <div class="topbar-title">
-          <h1>Groups</h1>
-          <p>All ministry groups and their chapters.</p>
+          <h1 id="chapter-title">Chapter</h1>
         </div>
       </div>
       <div class="topbar-actions">
@@ -76,7 +75,17 @@
     </div>
 
     <div class="page-body">
-      <div class="group-grid" id="group-grid"></div>
+      <a href="#" class="back-link" id="back-to-group"><i data-lucide="arrow-left"></i> <span id="back-to-group-label">Back to Group</span></a>
+
+      <div class="summary-grid" id="summary-grid" style="grid-template-columns:repeat(4,1fr);"></div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Cells in this chapter</h3>
+          <a href="#" id="manage-cells-link" class="btn btn-secondary btn-sm"><i data-lucide="settings-2" style="width:14px;height:14px;"></i> Manage Cells</a>
+        </div>
+        <div class="chapter-list" id="cell-list"></div>
+      </div>
     </div>
   </main>
 </div>
@@ -84,7 +93,7 @@
 <nav class="bottom-nav">
   <div class="bottom-nav-inner">
     <a href="admin-dashboard.html" class="bn-item"><i data-lucide="layout-dashboard"></i><span class="link-text">Home</span></a>
-    <a href="admin-groups.html" class="bn-item active"><i data-lucide="network"></i><span class="link-text">Groups</span></a>
+    <a href="admin-groups.html" class="bn-item"><i data-lucide="network"></i><span class="link-text">Groups</span></a>
     <a href="admin-reports.html" class="bn-item"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
     <a href="admin-analytics.html" class="bn-item"><i data-lucide="bar-chart-3"></i><span class="link-text">Analytics</span></a>
     <a href="#" class="bn-item" id="bn-logout" title="Logout"><i data-lucide="log-out"></i><span class="link-text">Logout</span></a>
@@ -108,26 +117,74 @@
     document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
     document.getElementById("bn-logout").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
 
-    const groups = (session.adminType === "group_admin" && session.groupId)
-      ? getGroups().filter(g => g.id === session.groupId)
-      : getGroups();
-    document.getElementById("group-grid").innerHTML = groups.map(g => {
-      const stats = getGroupStats(g.id);
-      return `
-        <div class="card group-card" onclick="window.location.href='admin-group-detail.html?group=${g.id}'">
-          <div class="group-card-top">
-            <div class="summary-icon tone-royal"><i data-lucide="network"></i></div>
-            <i data-lucide="chevron-right" style="width:18px; height:18px; color:var(--ink-400);"></i>
-          </div>
-          <h3>${g.name}</h3>
-          <p style="font-size:13px;">${stats.chapterCount} chapters</p>
-          <div class="group-card-stats">
-            <div class="group-stat"><b>${stats.cellCount}</b>Cells</div>
-            <div class="group-stat"><b>${stats.memberCount}</b>Members</div>
-            <div class="group-stat"><b>${stats.avgAttendance}%</b>Attendance</div>
-          </div>
-        </div>`;
-    }).join("");
+    const params = new URLSearchParams(window.location.search);
+    const chapterId = params.get("chapter");
+    const chapter = chapterId ? getChapterById(chapterId) : null;
+
+    if (!chapter) {
+      document.getElementById("chapter-title").textContent = "Chapter not found";
+      document.querySelector(".page-body").insertAdjacentHTML("beforeend", `<div class="empty-state"><h4>We couldn't find that chapter</h4><p>Go back and pick a chapter from a group.</p></div>`);
+      lucide.createIcons();
+      return;
+    }
+
+    // A Group Administrator can only view chapters within their own group.
+    if (session.adminType === "group_admin" && session.groupId && chapter.groupId !== session.groupId) {
+      window.location.href = "admin-group-detail.html?group=" + session.groupId;
+      return;
+    }
+
+    const group = getGroupById(chapter.groupId);
+
+    document.title = chapter.name + " — Campus Ministry BLW Zone B";
+    document.getElementById("chapter-title").textContent = chapter.name;
+    document.getElementById("back-to-group").href = "admin-group-detail.html?group=" + chapter.groupId;
+    document.getElementById("back-to-group-label").textContent = "Back to " + (group ? group.name : "Group");
+    document.getElementById("manage-cells-link").href = "admin-cells.html?chapter=" + chapter.id;
+
+    const cells = getCells(chapter.id);
+    const cellIds = cells.map(c => c.id);
+    const leaderCount = getLeaders().filter(l => cellIds.includes(l.cellId)).length;
+    const memberCount = getMembers().filter(m => cellIds.includes(m.cellId) && m.status === "Active").length;
+    const cellsWithAttendance = cells.filter(c => getLatestAttendance(c.id));
+    const avgAttendance = cellsWithAttendance.length
+      ? Math.round(cellsWithAttendance.reduce((sum, c) => sum + getAttendanceRate(c.id), 0) / cellsWithAttendance.length * 10) / 10
+      : 0;
+
+    const cards = [
+      { icon: "users-round", tone: "royal", value: cells.length, label: "Cells" },
+      { icon: "user-check", tone: "royal", value: leaderCount, label: "Cell Leaders" },
+      { icon: "users", tone: "success", value: memberCount, label: "Members" },
+      { icon: "trending-up", tone: "success", value: avgAttendance + "%", label: "Attendance" }
+    ];
+    document.getElementById("summary-grid").innerHTML = cards.map(c => `
+      <div class="card summary-card">
+        <div class="summary-top"><div class="summary-icon tone-${c.tone}"><i data-lucide="${c.icon}"></i></div></div>
+        <div class="summary-value">${c.value}</div>
+        <div class="summary-label">${c.label}</div>
+      </div>
+    `).join("");
+
+    const cellList = document.getElementById("cell-list");
+    if (!cells.length) {
+      cellList.innerHTML = `<div class="empty-state"><h4>No cells have been added to this chapter yet</h4><a href="admin-cells.html?chapter=${chapter.id}" class="btn btn-primary btn-sm" style="margin-top:14px;">+ Add Cell</a></div>`;
+    } else {
+      cellList.innerHTML = cells.map(c => {
+        const leader = getLeaderById(c.leaderId);
+        const memberCountForCell = getMembers(c.id).filter(m => m.status === "Active").length;
+        return `
+          <div class="chapter-row" onclick="window.location.href='admin-cells.html?chapter=${chapter.id}'">
+            <div class="chapter-row-name">
+              <div class="chapter-icon"><i data-lucide="users-round"></i></div>
+              ${c.name}
+            </div>
+            <div class="u-flex u-gap-12 u-center">
+              <span class="badge badge-dot ${statusBadgeClass(c.status)}">${c.status}</span>
+              <span class="chapter-row-meta">${leader ? leader.name : "Unassigned"} · ${memberCountForCell} members</span>
+            </div>
+          </div>`;
+      }).join("");
+    }
 
     lucide.createIcons();
   });

@@ -37,18 +37,18 @@
       <div class="side-label">Administration</div>
       <a href="admin-dashboard.html" class="side-link" title="Dashboard"><i data-lucide="layout-dashboard"></i><span class="link-text">Dashboard</span></a>
       <a href="admin-groups.html" class="side-link" title="Groups"><i data-lucide="network"></i><span class="link-text">Groups</span></a>
-      <a href="admin-cells.html" class="side-link soon" title="Cells"><i data-lucide="users-round"></i><span class="link-text">Cells</span></a>
-      <a href="admin-leaders.html" class="side-link soon" title="Cell Leaders"><i data-lucide="user-check"></i><span class="link-text">Cell Leaders</span></a>
-      <a href="admin-members.html" class="side-link soon" title="Members"><i data-lucide="users"></i><span class="link-text">Members</span></a>
-      <a href="admin-attendance.html" class="side-link soon" title="Attendance"><i data-lucide="clipboard-check"></i><span class="link-text">Attendance</span></a>
-      <a href="admin-offerings.html" class="side-link soon" title="Offerings"><i data-lucide="hand-coins"></i><span class="link-text">Offerings</span></a>
-      <a href="admin-growth.html" class="side-link soon" title="Growth"><i data-lucide="trending-up"></i><span class="link-text">Growth</span></a>
-      <a href="admin-activities.html" class="side-link soon" title="Activities"><i data-lucide="calendar-heart"></i><span class="link-text">Activities</span></a>
-      <a href="admin-reports.html" class="side-link soon" title="Reports"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
-      <a href="admin-analytics.html" class="side-link soon" title="Analytics"><i data-lucide="bar-chart-3"></i><span class="link-text">Analytics</span></a>
+      <a href="admin-cells.html" class="side-link" title="Cells"><i data-lucide="users-round"></i><span class="link-text">Cells</span></a>
+      <a href="admin-leaders.html" class="side-link" title="Cell Leaders"><i data-lucide="user-check"></i><span class="link-text">Cell Leaders</span></a>
+      <a href="admin-members.html" class="side-link" title="Members"><i data-lucide="users"></i><span class="link-text">Members</span></a>
+      <a href="admin-attendance.html" class="side-link" title="Attendance"><i data-lucide="clipboard-check"></i><span class="link-text">Attendance</span></a>
+      <a href="admin-offerings.html" class="side-link" title="Offerings"><i data-lucide="hand-coins"></i><span class="link-text">Offerings</span></a>
+      <a href="admin-growth.html" class="side-link" title="Growth"><i data-lucide="trending-up"></i><span class="link-text">Growth</span></a>
+      <a href="admin-activities.html" class="side-link" title="Activities"><i data-lucide="calendar-heart"></i><span class="link-text">Activities</span></a>
+      <a href="admin-reports.html" class="side-link" title="Reports"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
+      <a href="admin-analytics.html" class="side-link" title="Analytics"><i data-lucide="bar-chart-3"></i><span class="link-text">Analytics</span></a>
       <div class="side-label">Account</div>
-      <a href="admin-notifications.html" class="side-link soon" title="Notifications"><i data-lucide="bell"></i><span class="link-text">Notifications</span></a>
-      <a href="admin-settings.html" class="side-link soon" title="Settings"><i data-lucide="settings"></i><span class="link-text">Settings</span></a>
+      <a href="admin-notifications.html" class="side-link" title="Notifications"><i data-lucide="bell"></i><span class="link-text">Notifications</span></a>
+      <a href="admin-settings.html" class="side-link" title="Settings"><i data-lucide="settings"></i><span class="link-text">Settings</span></a>
     </div>
     <div class="side-foot">
       <a href="#" class="side-link" id="logout-link"><i data-lucide="log-out"></i><span class="link-text">Logout</span></a>
@@ -93,8 +93,8 @@
   <div class="bottom-nav-inner">
     <a href="admin-dashboard.html" class="bn-item"><i data-lucide="layout-dashboard"></i><span class="link-text">Home</span></a>
     <a href="admin-groups.html" class="bn-item active"><i data-lucide="network"></i><span class="link-text">Groups</span></a>
-    <a href="admin-reports.html" class="bn-item soon"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
-    <a href="admin-analytics.html" class="bn-item soon"><i data-lucide="bar-chart-3"></i><span class="link-text">Analytics</span></a>
+    <a href="admin-reports.html" class="bn-item"><i data-lucide="file-text"></i><span class="link-text">Reports</span></a>
+    <a href="admin-analytics.html" class="bn-item"><i data-lucide="bar-chart-3"></i><span class="link-text">Analytics</span></a>
     <a href="#" class="bn-item" id="bn-logout" title="Logout"><i data-lucide="log-out"></i><span class="link-text">Logout</span></a>
   </div>
 </nav>
@@ -115,13 +115,6 @@
     function goLogout() { confirmAction("Are you sure you want to end your current session?", logout, { title: "Sign out?", confirmLabel: "Sign Out" }); }
     document.getElementById("logout-link").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
     document.getElementById("bn-logout").addEventListener("click", (e) => { e.preventDefault(); goLogout(); });
-
-    document.querySelectorAll(".side-link.soon, .bn-item.soon").forEach(link => {
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        showToast("This section isn't available yet.", "success");
-      });
-    });
 
     const params = new URLSearchParams(window.location.search);
     const groupId = params.get("group");
@@ -162,7 +155,7 @@
     document.getElementById("chapter-list").innerHTML = chapters.map(ch => {
       const chStats = getChapterStats(ch.id);
       return `
-        <div class="chapter-row" onclick="showToast('Chapter detail isn\\'t available yet.', 'success')">
+        <div class="chapter-row" onclick="window.location.href='admin-chapter-detail.html?chapter=${ch.id}'">
           <div class="chapter-row-name">
             <div class="chapter-icon"><i data-lucide="building-2"></i></div>
             ${ch.name}
