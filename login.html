@@ -18,10 +18,63 @@
 <link rel="stylesheet" href="components.css">
 <link rel="stylesheet" href="responsive.css">
 <script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+<style>
+/* ===== Login: floating gradient background, glass card ===== */
+.auth-page {
+  position: relative; overflow: hidden;
+  background:
+    radial-gradient(60% 55% at 12% 8%, color-mix(in srgb, var(--royal-500) 8%, transparent), transparent 70%),
+    radial-gradient(55% 50% at 92% 92%, color-mix(in srgb, var(--violet-500) 8%, transparent), transparent 70%),
+    linear-gradient(160deg, var(--paper-50), color-mix(in srgb, var(--royal-500) 3%, var(--paper-50)));
+}
+.bg-blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .22; pointer-events: none; animation: blob-drift 14s ease-in-out infinite; }
+.bg-blob.b1 { width: 340px; height: 340px; top: -90px; left: -80px; background: var(--royal-500); }
+.bg-blob.b2 { width: 280px; height: 280px; bottom: -70px; right: -60px; background: var(--violet-500); animation-delay: -4s; }
+.bg-blob.b3 { width: 200px; height: 200px; top: 55%; left: 8%; background: color-mix(in srgb, var(--royal-600) 70%, #7fb4ff); opacity: .14; animation-delay: -8s; }
+.bg-blob.b4 { width: 180px; height: 180px; top: 10%; right: 12%; background: color-mix(in srgb, var(--violet-500) 60%, #7fb4ff); opacity: .14; animation-delay: -11s; }
+@keyframes blob-drift { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(40px,-30px) scale(1.1); } 66% { transform: translate(-30px,30px) scale(.95); } }
+
+.auth-card-wrap { position: relative; z-index: 1; animation: card-rise .6s ease both; }
+@keyframes card-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+.card.auth-card {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--paper-0) 78%, transparent), color-mix(in srgb, var(--paper-0) 46%, transparent));
+  border: 1px solid rgba(255,255,255,.55);
+  box-shadow: 0 24px 60px rgba(16,20,43,.14), inset 0 1px 0 rgba(255,255,255,.7);
+  -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
+}
+:root[data-theme="dark"] .card.auth-card { border-color: rgba(255,255,255,.12); box-shadow: 0 24px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.12); }
+.auth-card .input { background: color-mix(in srgb, var(--paper-0) 55%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: border-color .2s ease, box-shadow .2s ease, background .2s ease; }
+.auth-card .input:focus { border-color: var(--royal-500); box-shadow: 0 0 0 4px color-mix(in srgb, var(--royal-500) 22%, transparent); background: color-mix(in srgb, var(--paper-0) 80%, transparent); }
+
+.role-select-row .role-option { transition: transform .2s ease, background .25s ease, box-shadow .25s ease, color .2s ease, border-color .25s ease; }
+.role-select-row .role-option:hover { transform: translateY(-2px); }
+.role-select-row .role-option.active { color: #fff; border-color: rgba(255,255,255,.3); background: linear-gradient(135deg, rgba(104,120,255,.95), rgba(51,70,214,.92) 55%, rgba(39,53,171,.95)); box-shadow: 0 8px 20px rgba(51,70,214,.32), inset 0 1px 0 rgba(255,255,255,.35); }
+
+.btn.btn-google { color: var(--ink-900); background: linear-gradient(135deg, rgba(255,255,255,.75), rgba(255,255,255,.35)); border-color: rgba(77,94,234,.25); box-shadow: 0 6px 18px rgba(16,20,43,.08), inset 0 1px 0 rgba(255,255,255,.8); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.btn.btn-google:hover { border-color: var(--royal-500); box-shadow: 0 12px 26px rgba(51,70,214,.2), inset 0 1px 0 rgba(255,255,255,.8); }
+:root[data-theme="dark"] .btn.btn-google { background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.04)); border-color: rgba(255,255,255,.18); }
+
+/* top corner controls */
+.back-home { position: absolute; top: 24px; left: 24px; z-index: 2; }
+.back-home svg { transition: transform .2s ease; }
+.back-home:hover svg { transform: translateX(-3px); }
+.auth-page .theme-toggle { width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(77,94,234,.25) !important; background: linear-gradient(135deg, rgba(255,255,255,.7), rgba(255,255,255,.3)) !important; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 6px 18px rgba(16,20,43,.1); transition: transform .2s ease, box-shadow .2s ease; }
+.auth-page .theme-toggle:hover { transform: translateY(-2px) rotate(12deg); box-shadow: 0 12px 24px rgba(51,70,214,.2); }
+:root[data-theme="dark"] .auth-page .theme-toggle { background: rgba(255,255,255,.1) !important; border-color: rgba(255,255,255,.18) !important; }
+@media (max-width: 560px) { .back-home, .auth-page .theme-toggle { top: 16px !important; } .back-home { left: 16px; } .auth-page .theme-toggle { right: 16px !important; } .auth-card-wrap { margin-top: 48px; } }
+@media (prefers-reduced-motion: reduce) { .bg-blob, </style>
 </head>
 <body>
 
 <div class="auth-page">
+  <span class="bg-blob b1"></span><span class="bg-blob b2"></span><span class="bg-blob b3"></span><span class="bg-blob b4"></span>
+
+
+
+
+
+  <a href="index.html" class="btn btn-secondary btn-sm back-home"><i data-lucide="arrow-left"></i> Back to home</a>
   <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" style="position:absolute; top:24px; right:24px; z-index:2;">
     <i data-lucide="moon" class="theme-icon-light"></i>
     <i data-lucide="sun" class="theme-icon-dark"></i>
