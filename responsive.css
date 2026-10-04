@@ -526,3 +526,18 @@ body:has(.sidebar.open) .menu-toggle span:nth-child(2) { transform: translate(-5
 .side-link:hover .link-text { transform: translateX(3px); }
 .side-link:hover svg { transform: scale(1.08); }
 .side-scroll, .side-foot { padding-left: 4px; padding-right: 4px; }
+
+/* ============================================================
+   NO AUTO-ZOOM ON PHONES
+   iOS/Android browsers zoom the page when a field's text is under 16px.
+   Fields keep 16px on small screens so tapping to type never zooms.
+   ============================================================ */
+@media (max-width: 900px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea,
+  .input,
+  .select {
+    font-size: 16px !important;
+  }
+}
