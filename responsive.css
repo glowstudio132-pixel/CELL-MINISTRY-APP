@@ -345,3 +345,184 @@
   .summary-value { font-size: 22px; }
   table.data-table { min-width: 560px; }
 }
+
+
+/* ============================================================
+   GLASS NAVIGATION — sidebar, topbar buttons, bottom nav
+   (blue gradient glass + hover lift + shine, matches .btn)
+   ============================================================ */
+
+/* ---------- Sidebar links ---------- */
+.side-scroll { padding-left: 2px; padding-right: 2px; }
+.side-foot { padding-left: 2px; padding-right: 2px; }
+.side-link {
+  position: relative; overflow: hidden; isolation: isolate;
+  border: 1px solid transparent;
+  transition: transform 0.2s ease, background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, color 0.2s ease;
+}
+.side-link::after {
+  content: ""; position: absolute; top: 0; left: -80%; width: 55%; height: 100%; z-index: -1;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  transform: skewX(-20deg); transition: left 0.6s ease; pointer-events: none;
+}
+.side-link:hover {
+  transform: translateX(3px);
+  background: linear-gradient(135deg, rgba(77, 94, 234, 0.14), rgba(77, 94, 234, 0.04));
+  border-color: rgba(77, 94, 234, 0.25);
+  color: var(--sidebar-text-strong);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.side-link:hover::after { left: 130%; }
+.side-link:hover svg { transform: scale(1.1); }
+.side-link svg { transition: transform 0.2s ease; }
+.side-link.active:hover { transform: none; }
+.side-link.active,
+.side-link.active:hover {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(104, 120, 255, 0.95), rgba(51, 70, 214, 0.92) 55%, rgba(39, 53, 171, 0.95));
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(51, 70, 214, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.side-link.active .count { background: rgba(255, 255, 255, 0.2); color: #fff; }
+:root[data-theme="dark"] .side-link:hover {
+  background: linear-gradient(135deg, rgba(115, 134, 255, 0.22), rgba(255, 255, 255, 0.04));
+  border-color: rgba(255, 255, 255, 0.14);
+}
+#logout-link:hover {
+  background: linear-gradient(135deg, rgba(209, 72, 63, 0.16), rgba(209, 72, 63, 0.04));
+  border-color: rgba(209, 72, 63, 0.3);
+  color: var(--danger-600);
+}
+.sidebar.collapsed .side-link:hover { transform: translateY(-1px); }
+
+.sidebar-collapse-btn {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.15));
+  border-color: rgba(77, 94, 234, 0.25);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  transition: transform 0.2s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+.sidebar-collapse-btn:hover { transform: translateY(-1px); background: linear-gradient(135deg, rgba(77, 94, 234, 0.2), rgba(77, 94, 234, 0.06)); box-shadow: 0 6px 14px rgba(51, 70, 214, 0.2); }
+:root[data-theme="dark"] .sidebar-collapse-btn { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.14); }
+
+/* ---------- Topbar buttons ---------- */
+.icon-btn, .theme-toggle, .profile-trigger {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
+  border: 1px solid rgba(77, 94, 234, 0.22);
+  box-shadow: 0 4px 14px rgba(16, 20, 43, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  -webkit-backdrop-filter: blur(12px) saturate(160%); backdrop-filter: blur(12px) saturate(160%);
+  transition: transform 0.2s ease, box-shadow 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+}
+.icon-btn:hover, .theme-toggle:hover, .profile-trigger:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, rgba(77, 94, 234, 0.18), rgba(255, 255, 255, 0.5));
+  border-color: var(--royal-500);
+  box-shadow: 0 10px 22px rgba(51, 70, 214, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.icon-btn:active, .profile-trigger:active { transform: translateY(0) scale(0.96); }
+:root[data-theme="dark"] .icon-btn,
+:root[data-theme="dark"] .theme-toggle,
+:root[data-theme="dark"] .profile-trigger {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+:root[data-theme="dark"] .icon-btn:hover,
+:root[data-theme="dark"] .theme-toggle:hover,
+:root[data-theme="dark"] .profile-trigger:hover {
+  background: linear-gradient(135deg, rgba(115, 134, 255, 0.3), rgba(255, 255, 255, 0.06));
+  border-color: rgba(155, 170, 255, 0.5);
+}
+.notif-dot { border-color: transparent; }
+
+/* mobile menu (hamburger) button — same build as the landing page */
+.menu-toggle {
+  position: relative; width: 42px; height: 42px; padding: 0; flex-shrink: 0;
+  border-radius: 50%; border: 1px solid rgba(77, 94, 234, 0.22);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  box-shadow: 0 4px 14px rgba(16, 20, 43, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: transform 0.2s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+.menu-toggle:hover { background: linear-gradient(135deg, rgba(77, 94, 234, 0.18), rgba(255, 255, 255, 0.5)); box-shadow: 0 10px 22px rgba(51, 70, 214, 0.2); }
+.menu-toggle:active { transform: scale(0.94); }
+.menu-toggle span {
+  position: absolute; left: 50%; top: 50%; display: block; width: 16px; height: 2px; margin: 0;
+  border-radius: 2px; background: var(--ink-900);
+  transition: transform 0.25s ease, width 0.25s ease, opacity 0.2s ease;
+}
+.menu-toggle span:nth-child(1) { transform: translate(-50%, -4px); }
+.menu-toggle span:nth-child(2) { transform: translate(-50%, 3px); width: 10px; margin-left: -3px; }
+.menu-toggle span:nth-child(3) { display: none; }
+body:has(.sidebar.open) .menu-toggle span:nth-child(1) { transform: translate(-50%, -50%) rotate(45deg); }
+body:has(.sidebar.open) .menu-toggle span:nth-child(2) { transform: translate(-50%, -50%) rotate(-45deg); width: 16px; margin-left: 0; }
+:root[data-theme="dark"] .menu-toggle { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.16); }
+
+/* ---------- Mobile bottom nav ---------- */
+.bottom-nav {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.5));
+  border-color: rgba(77, 94, 234, 0.2);
+  -webkit-backdrop-filter: blur(18px) saturate(170%); backdrop-filter: blur(18px) saturate(170%);
+  box-shadow: 0 16px 36px rgba(16, 20, 43, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+:root[data-theme="dark"] .bottom-nav {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)), rgba(11, 15, 43, 0.6);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.bn-item { border: 1px solid transparent; transition: background 0.25s ease, color 0.2s ease, padding 0.2s ease, transform 0.2s ease, box-shadow 0.25s ease; }
+.bn-item:not(.active):hover, .bn-item:not(.active):active { background: rgba(77, 94, 234, 0.14); color: var(--royal-600); transform: translateY(-2px); }
+.bn-item.active {
+  background: linear-gradient(135deg, rgba(104, 120, 255, 0.95), rgba(51, 70, 214, 0.92) 55%, rgba(39, 53, 171, 0.95));
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(51, 70, 214, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* ---------- Quick actions (leader dashboard) ---------- */
+.quick-action {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.45));
+  border-color: rgba(77, 94, 234, 0.2);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  transition: transform 0.2s ease, border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+.quick-action:hover { transform: translateX(4px); background: linear-gradient(135deg, rgba(77, 94, 234, 0.12), rgba(255, 255, 255, 0.5)); box-shadow: 0 10px 22px rgba(51, 70, 214, 0.16); }
+.quick-action:hover .qa-arrow { transform: translateX(3px); color: var(--royal-600); }
+.qa-arrow { transition: transform 0.2s ease, color 0.2s ease; }
+:root[data-theme="dark"] .quick-action { background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03)); border-color: rgba(255, 255, 255, 0.14); }
+
+/* ============================================================
+   SIDEBAR FITS THE SCREEN — no scrolling in the menu.
+   Spacing scales with the screen height so every link plus
+   Logout always fits (desktop sidebar and mobile drawer).
+   ============================================================ */
+.sidebar {
+  height: 100vh;
+  height: 100dvh;
+  padding-top: clamp(12px, 2.2vh, 22px);
+  padding-bottom: clamp(12px, 2.2vh, 22px);
+}
+.sidebar-brand-row { padding-bottom: clamp(10px, 2vh, 20px); }
+.side-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.side-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.side-label { padding: clamp(8px, 1.8vh, 18px) 12px clamp(4px, 0.9vh, 8px); }
+.side-link {
+  padding: clamp(5px, 1.15vh, 11px) 12px;
+  margin-bottom: clamp(1px, 0.3vh, 2px);
+  font-size: clamp(13px, 1.7vh, 14px);
+}
+.side-foot { padding-top: clamp(8px, 1.4vh, 14px); margin-top: clamp(4px, 1vh, 8px); }
+
+/* ---------- Hover without clipping ----------
+   The sidebar's scroll area clips anything that moves outside it, so the
+   link itself no longer slides. Only the label nudges inside the button. */
+.side-link:hover,
+.sidebar.collapsed .side-link:hover,
+.side-link.active:hover { transform: none; }
+.side-link .link-text { transition: transform 0.2s ease; }
+.side-link:hover .link-text { transform: translateX(3px); }
+.side-link:hover svg { transform: scale(1.08); }
+.side-scroll, .side-foot { padding-left: 4px; padding-right: 4px; }
