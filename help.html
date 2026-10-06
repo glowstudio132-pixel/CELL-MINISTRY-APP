@@ -9,6 +9,7 @@
     var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.setAttribute("data-theme", theme);
   } catch (e) {}
+  try { if (localStorage.getItem("ceCampusSidebarCollapsed") === "1") document.documentElement.setAttribute("data-sidebar", "collapsed"); } catch (e) {}
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -52,26 +53,28 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="utils.js"></script>
 <script src="theme.js"></script>
 <script src="auth.js"></script>
 <script>
-  const session = requireAuth();
+  let session = null; // only the role is needed here
 
   const FAQ_LEADER = [
     { q: "How do I add a new member to my cell?", a: "Go to Members in the sidebar and click \"Add Member\". Fill in their details and save — they'll appear in your member list immediately." },
     { q: "How do I take attendance?", a: "Go to Attendance, pick the date, mark each member Present, Absent or Excused, add any visitors or first-timers, then click \"Save Attendance\"." },
     { q: "How do I record an offering?", a: "Go to Offerings, fill in the date, type, amount and payment method, then click \"Record Offering\". Your history updates right away." },
     { q: "How do I submit my weekly report?", a: "Go to Reports, fill in the week's numbers and any notes, then click \"Submit Report\". Your administrator will review it from their side." },
-    { q: "What if I don't have a cell linked to my account yet?", a: "Most pages will show a short notice if no cell is linked. Contact your administrator, or register again and set up a cell during sign-up." }
+    { q: "What if I don't have a cell linked to my account yet?", a: "The first time you sign in, you will be asked to choose your group, chapter and a cell name. Once that is done your cell is linked to your account." }
   ];
 
   const FAQ_ADMIN = [
-    { q: "What's the difference between a Group Administrator and a Zonal Administrator?", a: "A Group Administrator only sees the one group they're assigned to. A Zonal Administrator sees all groups. This is set when the account is created and can't be changed from within the app yet." },
+    { q: "What's the difference between a Group Administrator and a Zonal Administrator?", a: "A Group Administrator only sees the one group they're assigned to. A Zonal Administrator sees all groups. Administrator accounts are invited by email, and the type is set in the invitation. It can't be changed from within the app." },
     { q: "How do I add a cell?", a: "Go to Cells, click \"Add Cell\", choose the chapter it belongs to, and fill in the details." },
     { q: "How do I review a submitted report?", a: "Go to Reports, find the report, and click \"Mark Reviewed\"." },
     { q: "How do I see how a specific group is doing?", a: "Go to Groups and click into the group you want — you'll see its chapters and their cell/member counts." },
-    { q: "Why are some pages empty?", a: "Cells, members, attendance and reports only appear once cell leaders register and start using the app — nothing here is invented data." }
+    { q: "Why are some pages empty?", a: "Cells, members, attendance and reports only appear once cell leaders sign up and start using the app. Nothing here is invented data." }
   ];
 
   const FAQ_COMMON = [
@@ -79,7 +82,13 @@
     { q: "How do I sign out?", a: "Click your profile in the top right and choose \"Sign Out\", or use Logout in the sidebar / bottom navigation." }
   ];
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    // The help page is open to everyone; signed-in people just get role-specific answers.
+    try {
+      const sb = getSupabase();
+      const { data: { session: auth } } = await sb.auth.getSession();
+      if (auth) { const p = await fetchProfile(sb, auth.user.id); if (p) session = { role: p.role }; }
+    } catch (e) { /* not signed in, or Supabase not configured: show the general help */ }
     const backLink = document.getElementById("back-link");
     let faqs = FAQ_COMMON;
 

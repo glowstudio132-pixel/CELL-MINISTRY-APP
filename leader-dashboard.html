@@ -9,6 +9,7 @@
     var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.setAttribute("data-theme", theme);
   } catch (e) {}
+  try { if (localStorage.getItem("ceCampusSidebarCollapsed") === "1") document.documentElement.setAttribute("data-sidebar", "collapsed"); } catch (e) {}
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -167,6 +168,8 @@
   </div>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="utils.js"></script>
 <script src="theme.js"></script>
 <script src="auth.js"></script>
@@ -174,7 +177,7 @@
 <script src="components.js"></script>
 <script src="charts.js"></script>
 <script>
-  const session = requireRole("cell_leader");
+  let session = null;
 
   function goTo(page) { window.location.href = page; }
 
@@ -198,13 +201,16 @@
     }, 6000);
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    session = await bootPage("cell_leader");
     if (!session) return;
 
     document.getElementById("greeting-name").textContent = session.name.split(" ")[0] + " 👋";
-    if (session.cell) {
+    const liveCell = session.cellId ? getCellById(session.cellId) : null;
+    const cellLabel = liveCell ? liveCell.name : session.cell;
+    if (cellLabel) {
       const ctx = document.getElementById("greeting-context");
-      ctx.textContent = session.cell;
+      ctx.textContent = cellLabel;
       ctx.style.display = "inline-flex";
     }
     initProfileMenu("profile-menu-slot", session);
@@ -223,14 +229,14 @@
     const strength = cellId ? getCellStrength(cellId) : 0;
     const latest = cellId ? getLatestAttendance(cellId) : null;
     const rate = cellId ? getAttendanceRate(cellId) : 0;
-    const latestOffering = cellId ? getOfferings(cellId)[0] : null;
+    const thisWeek = cellId ? getWeeklySeries([cellId], 1)[0] : null;
     const activityCount = cellId ? getActivities(cellId).length : 0;
 
     const cards = [
       { icon: "users-round", tone: "royal", value: strength, label: "Cell Strength" },
-      { icon: "clipboard-check", tone: "success", value: latest ? latest.present : 0, label: "This Week's Attendance" },
+      { icon: "clipboard-check", tone: "success", value: latest ? latest.present : 0, label: "Latest Attendance" },
       { icon: "trending-up", tone: "success", value: rate + "%", label: "Attendance Rate" },
-      { icon: "hand-coins", tone: "royal", value: latestOffering ? formatNaira(latestOffering.amount) : formatNaira(0), label: "Offering This Week" },
+      { icon: "hand-coins", tone: "royal", value: formatNaira(thisWeek ? thisWeek.offerings : 0), label: "Offering This Week" },
       { icon: "calendar-heart", tone: "success", value: activityCount, label: "Activities" }
     ];
 
@@ -244,14 +250,9 @@
       </div>
     `).join("");
 
-    const history = cellId ? getAttendance(cellId).slice(0, 6).reverse() : [];
-    if (history.length) {
-      renderLineChart(
-        "attendance-trend",
-        history.map(h => formatDate(h.date, { day: "numeric", month: "short" })),
-        history.map(h => h.present),
-        { label: "Present" }
-      );
+    const weekly = cellId ? getWeeklySeries([cellId], 6) : [];
+    if (weekly.some(w => w.present > 0)) {
+      renderLineChart("attendance-trend", weekly.map(w => w.label), weekly.map(w => w.present), { label: "Present" });
     } else {
       document.getElementById("attendance-chart-wrap").innerHTML = `<div class="empty-state"><h4>No attendance recorded yet</h4><p>Once you take attendance, the trend will appear here.</p></div>`;
     }

@@ -9,6 +9,7 @@
     var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.setAttribute("data-theme", theme);
   } catch (e) {}
+  try { if (localStorage.getItem("ceCampusSidebarCollapsed") === "1") document.documentElement.setAttribute("data-sidebar", "collapsed"); } catch (e) {}
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -90,6 +91,19 @@
         <h3>Activities</h3>
         <button class="btn btn-primary btn-sm" onclick="openAddActivityModal()"><i data-lucide="plus" style="width:15px;height:15px;"></i> Add Activity</button>
       </div>
+      <div class="panel" id="photos-panel">
+        <div class="panel-head"><h3>Activity Photos</h3></div>
+        <p style="font-size:13px; color:var(--ink-500); margin-bottom:14px;">Share 2 or 3 photos from an activity. Your administrators can see them as soon as you upload.</p>
+        <div class="field" style="max-width:420px;"><label>Activity</label><select class="select" id="ph-activity"></select></div>
+        <div id="ph-info" class="field-hint" style="margin-bottom:10px;"></div>
+        <div id="ph-previews" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;"></div>
+        <input type="file" id="ph-input" accept="image/*" multiple style="display:none;" />
+        <div class="u-flex u-gap-12" style="flex-wrap:wrap;">
+          <button type="button" class="btn btn-secondary btn-sm" id="ph-choose"><i data-lucide="image-plus"></i> Choose photos</button>
+          <button type="button" class="btn btn-primary btn-sm" id="ph-upload"><i data-lucide="upload"></i> Upload photos</button>
+        </div>
+      </div>
+
       <div id="activities-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;"></div>
 
       <div class="modal-overlay hidden" id="activity-modal">
@@ -122,6 +136,8 @@
   </div>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="utils.js"></script>
 <script src="theme.js"></script>
 <script src="auth.js"></script>
@@ -129,11 +145,13 @@
 <script src="components.js"></script>
 
 <script>
-  const session = requireRole("cell_leader");
-  const cellId = session ? (session.cellId || null) : null;
+  let session = null;
+  let cellId = null;
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    session = await bootPage("cell_leader");
     if (!session) return;
+    cellId = session.cellId || null;
     initProfileMenu("profile-menu-slot", session);
 
     function goLogout() { confirmAction("Are you sure you want to end your current session?", logout, { title: "Sign out?", confirmLabel: "Sign Out" }); }
@@ -146,49 +164,131 @@
     }
 
     document.getElementById("a-category").innerHTML = ACTIVITY_CATEGORIES.map(c => `<option>${c}</option>`).join("");
-    document.getElementById("a-date").value = new Date().toISOString().slice(0, 10);
+    document.getElementById("a-date").value = localISODate();
+
+    const $ = id => document.getElementById(id);
+    let staged = []; // data URLs chosen but not yet uploaded
+
+    function photoStrip(a) {
+      const photos = a.photos || [];
+      if (!photos.length) return "";
+      return `<div style="display:grid; grid-template-columns:repeat(${photos.length}, 1fr); gap:6px; margin-bottom:12px;">` + photos.map((p, i) => `
+        <div style="position:relative; aspect-ratio:1; border-radius:8px; overflow:hidden; background:var(--line-200);">
+          <img src="${p.src}" alt="Activity photo" data-view="${a.id}:${i}" style="width:100%; height:100%; object-fit:cover; cursor:zoom-in; display:block;" />
+          <button type="button" data-del="${a.id}:${i}" aria-label="Remove photo" style="position:absolute; top:4px; right:4px; width:22px; height:22px; border-radius:50%; border:0; background:rgba(10,12,30,.7); color:#fff; cursor:pointer; line-height:1;">&times;</button>
+        </div>`).join("") + `</div>`;
+    }
 
     function renderActivities() {
       const list = cellId ? getActivities(cellId) : [];
-      const grid = document.getElementById("activities-grid");
+      const grid = $("activities-grid");
+      renderPhotoPanel(list);
       if (!list.length) {
         grid.innerHTML = `<div class="card" style="grid-column:1/-1;"><div class="empty-state"><h4>No activities recorded yet</h4><p>Activities you log will show up here.</p></div></div>`;
         return;
       }
       grid.innerHTML = list.map(a => `
         <div class="card" style="padding:20px;">
-          <span class="badge badge-pending" style="margin-bottom:10px;">${a.category}</span>
-          <h4 style="font-size:15px; margin-bottom:6px;">${a.name}</h4>
-          <p style="font-size:13px; margin-bottom:10px; color:var(--ink-500);">${a.description || ""}</p>
+          ${photoStrip(a)}
+          <span class="badge badge-pending" style="margin-bottom:10px;">${escapeHtml(a.category)}</span>
+          <h4 style="font-size:15px; margin-bottom:6px;">${escapeHtml(a.name)}</h4>
+          <p style="font-size:13px; margin-bottom:10px; color:var(--ink-500);">${escapeHtml(a.description || "")}</p>
           <div class="u-flex u-gap-16" style="font-size:12.5px; color:var(--ink-500);">
             <span>${formatDate(a.date)}</span>
             <span>${a.participants || 0} participants</span>
           </div>
         </div>
       `).join("");
+      grid.querySelectorAll("[data-view]").forEach(img => img.addEventListener("click", () => {
+        const [id, i] = img.dataset.view.split(":"); const a = getActivityById(id);
+        openPhotoViewer(a.photos[+i].src, a.name);
+      }));
+      grid.querySelectorAll("[data-del]").forEach(btn => btn.addEventListener("click", () => {
+        const [id, i] = btn.dataset.del.split(":");
+        confirmAction("This photo will be removed for you and your administrators.", async () => { try { await removeActivityPhoto(id, +i); } catch (err) { showToast(err.message, "error"); return; } renderActivities(); showToast("Photo removed.", "success"); }, { title: "Remove photo?", confirmLabel: "Remove" });
+      }));
     }
+
+    /* ---------- Activity Photos segment ---------- */
+    function remainingSlots() {
+      const a = getActivityById($("ph-activity").value);
+      return a ? ACTIVITY_PHOTO_LIMIT - (a.photos || []).length : 0;
+    }
+    function renderPreviews() {
+      const left = remainingSlots();
+      const a = getActivityById($("ph-activity").value);
+      $("ph-info").textContent = a ? ((a.photos || []).length + " of " + ACTIVITY_PHOTO_LIMIT + " photos on this activity" + (left > 0 ? "; you can add " + left + " more." : ". Remove one to add another.")) : "";
+      $("ph-previews").innerHTML = staged.map((src, i) => `
+        <div style="position:relative; width:84px; height:84px; border-radius:8px; overflow:hidden;">
+          <img src="${src}" alt="" style="width:100%; height:100%; object-fit:cover; display:block;" />
+          <button type="button" data-unstage="${i}" aria-label="Remove" style="position:absolute; top:4px; right:4px; width:20px; height:20px; border-radius:50%; border:0; background:rgba(10,12,30,.7); color:#fff; cursor:pointer; line-height:1;">&times;</button>
+        </div>`).join("");
+      $("ph-previews").querySelectorAll("[data-unstage]").forEach(b => b.addEventListener("click", () => { staged.splice(+b.dataset.unstage, 1); renderPreviews(); }));
+      $("ph-choose").disabled = left - staged.length <= 0;
+      $("ph-upload").disabled = staged.length === 0;
+    }
+    function renderPhotoPanel(list) {
+      const panel = $("photos-panel");
+      if (!cellId) { panel.style.display = "none"; return; }
+      panel.style.display = "";
+      const prev = $("ph-activity").value;
+      if (!list.length) {
+        $("ph-activity").innerHTML = `<option value="">No activities yet</option>`;
+        $("ph-info").textContent = "Add an activity first, then you can attach photos to it.";
+        $("ph-choose").disabled = true; $("ph-upload").disabled = true; $("ph-previews").innerHTML = "";
+        return;
+      }
+      $("ph-activity").innerHTML = list.map(a => `<option value="${a.id}">${escapeHtml(a.name)} · ${formatDate(a.date)}</option>`).join("");
+      if (list.some(a => a.id === prev)) $("ph-activity").value = prev;
+      renderPreviews();
+    }
+    $("ph-activity").addEventListener("change", () => { staged = []; renderPreviews(); });
+    $("ph-choose").addEventListener("click", () => $("ph-input").click());
+    $("ph-input").addEventListener("change", async (e) => {
+      const files = Array.from(e.target.files); e.target.value = "";
+      const room = remainingSlots() - staged.length;
+      if (!files.length) return;
+      if (files.length > room) showToast("Only " + room + " more photo(s) fit on this activity, so I took the first " + room + ".", "error");
+      try {
+        const done = await Promise.all(files.slice(0, Math.max(0, room)).map(f => readImageResized(f, 960, 0.72)));
+        staged = staged.concat(done);
+      } catch (err) { showToast(err.message, "error"); }
+      renderPreviews();
+    });
+    $("ph-upload").addEventListener("click", async () => {
+      const id = $("ph-activity").value;
+      if (!id || !staged.length) return;
+      $("ph-upload").disabled = true;
+      const res = await addActivityPhotos(id, staged);
+      if (!res.ok) { showToast(res.error, "error"); renderPreviews(); return; }
+      staged = [];
+      showToast("Photos uploaded. Your administrators can now see them.", "success");
+      renderActivities();
+    });
 
     window.openAddActivityModal = function () {
       if (!cellId) { showToast("You need a cell before adding activities.", "error"); return; }
       document.getElementById("activity-form").reset();
-      document.getElementById("a-date").value = new Date().toISOString().slice(0, 10);
+      document.getElementById("a-date").value = localISODate();
       openModal("activity-modal");
     };
 
-    document.getElementById("activity-form").addEventListener("submit", (e) => {
+    document.getElementById("activity-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const name = document.getElementById("a-name").value.trim();
       if (!name) { showToast("Please enter an activity name.", "error"); return; }
-      createActivity({
-        cellId,
-        name,
-        category: document.getElementById("a-category").value,
-        date: document.getElementById("a-date").value,
-        location: document.getElementById("a-location").value.trim(),
-        participants: parseInt(document.getElementById("a-participants").value, 10) || 0,
-        description: document.getElementById("a-description").value.trim(),
-        notes: ""
-      });
+      try {
+        await createActivity({
+          cellId,
+          name,
+          category: document.getElementById("a-category").value,
+          date: document.getElementById("a-date").value,
+          location: document.getElementById("a-location").value.trim(),
+          participants: parseInt(document.getElementById("a-participants").value, 10) || 0,
+          description: document.getElementById("a-description").value.trim(),
+          notes: ""
+        });
+      } catch (err) { showToast(err.message, "error"); return; }
       showToast("Activity added successfully.", "success");
       closeModal("activity-modal");
       renderActivities();

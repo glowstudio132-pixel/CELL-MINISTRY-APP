@@ -9,6 +9,7 @@
     var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.setAttribute("data-theme", theme);
   } catch (e) {}
+  try { if (localStorage.getItem("ceCampusSidebarCollapsed") === "1") document.documentElement.setAttribute("data-sidebar", "collapsed"); } catch (e) {}
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -115,10 +116,27 @@
           <div class="modal-body">
             <form id="member-form">
               <input type="hidden" id="member-id" />
+              <div class="summary-label" style="margin-bottom:10px;">Personal Info</div>
               <div class="field"><label>Full Name</label><input class="input" id="m-name" required /></div>
               <div class="field"><label>Phone</label><input class="input" id="m-phone" /></div>
               <div class="field"><label>Email</label><input class="input" type="email" id="m-email" /></div>
               <div class="field"><label>Gender</label><select class="select" id="m-gender"><option>Male</option><option>Female</option></select></div>
+
+              <div class="summary-label" style="margin:18px 0 10px;">Campus Info</div>
+              <div class="field"><label>Academic Department</label><input class="input" id="m-department" placeholder="e.g. Computer Science" /></div>
+              <div class="field"><label>Course of Study</label><input class="input" id="m-course" placeholder="e.g. B.Sc. Software Engineering" /></div>
+
+              <div class="summary-label" style="margin:18px 0 10px;">Church Info</div>
+              <div class="field"><label>Church Department</label>
+                <input class="input" id="m-church-dept" list="church-dept-list" placeholder="e.g. Choir (leave blank if none)" maxlength="60" />
+                <datalist id="church-dept-list">
+                  <option value="Choir"></option><option value="Ushering"></option><option value="Media / Technical"></option>
+                  <option value="Sanctuary Keepers"></option><option value="Protocol"></option><option value="Drama"></option>
+                  <option value="Follow-up"></option><option value="Welfare"></option><option value="Prayer"></option>
+                  <option value="Evangelism"></option><option value="Children / Teens"></option><option value="Transport"></option>
+                </datalist>
+              </div>
+              <div class="field"><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="m-isleader" /> This member is a leader (attends the Leaders Meeting)</label></div>
               <div class="field"><label>Date Joined</label><input class="input" type="date" id="m-joined" /></div>
               <div class="field"><label>Growth Stage</label><select class="select" id="m-stage"></select></div>
               <div class="field"><label>Status</label><select class="select" id="m-status"><option>Active</option><option>Inactive</option></select></div>
@@ -149,6 +167,8 @@
   </div>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="utils.js"></script>
 <script src="theme.js"></script>
 <script src="auth.js"></script>
@@ -156,11 +176,13 @@
 <script src="components.js"></script>
 
 <script>
-  const session = requireRole("cell_leader");
-  const cellId = session ? (session.cellId || null) : null;
+  let session = null;
+  let cellId = null;
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    session = await bootPage("cell_leader");
     if (!session) return;
+    cellId = session.cellId || null;
     initProfileMenu("profile-menu-slot", session);
 
     function goLogout() { confirmAction("Are you sure you want to end your current session?", logout, { title: "Sign out?", confirmLabel: "Sign Out" }); }
@@ -189,7 +211,7 @@
       }
       body.innerHTML = filtered.map(m => `
         <tr>
-          <td style="font-weight:600; color:var(--ink-900);">${m.name}</td>
+          <td style="font-weight:600; color:var(--ink-900);">${m.name}${m.isLeader ? ` <span class="badge badge-active" style="font-size:10.5px; margin-left:4px;">Leader</span>` : ""}${(m.department || m.course) ? `<div style="font-weight:400; font-size:12px; color:var(--ink-500);">${[m.department, m.course].filter(Boolean).join(" · ")}</div>` : ""}</td>
           <td>${m.phone || "—"}</td>
           <td>${m.gender || "—"}</td>
           <td>${m.joinDate ? formatDate(m.joinDate) : "—"}</td>
@@ -210,6 +232,7 @@
       document.getElementById("member-form").reset();
       document.getElementById("member-id").value = "";
       document.getElementById("m-status").value = "Active";
+      document.getElementById("m-isleader").checked = false;
       document.getElementById("m-stage").value = "Joined Cell";
       openModal("member-modal");
     };
@@ -222,10 +245,14 @@
       document.getElementById("m-name").value = m.name;
       document.getElementById("m-phone").value = m.phone || "";
       document.getElementById("m-email").value = m.email || "";
+      document.getElementById("m-department").value = m.department || "";
+      document.getElementById("m-course").value = m.course || "";
+      document.getElementById("m-church-dept").value = m.churchDepartment || "";
       document.getElementById("m-gender").value = m.gender || "Male";
       document.getElementById("m-joined").value = m.joinDate || "";
       document.getElementById("m-stage").value = m.growthStage;
       document.getElementById("m-status").value = m.status;
+      document.getElementById("m-isleader").checked = !!m.isLeader;
       document.getElementById("m-notes").value = m.notes || "";
       openModal("member-modal");
     };
@@ -242,6 +269,9 @@
           <div><div class="summary-label">Phone</div><div style="font-weight:600;">${m.phone || "—"}</div></div>
           <div><div class="summary-label">Email</div><div style="font-weight:600;">${m.email || "—"}</div></div>
           <div><div class="summary-label">Gender</div><div style="font-weight:600;">${m.gender || "—"}</div></div>
+          <div><div class="summary-label">Academic Department</div><div style="font-weight:600;">${m.department || "—"}</div></div>
+          <div><div class="summary-label">Course of Study</div><div style="font-weight:600;">${m.course || "—"}</div></div>
+          <div><div class="summary-label">Church Department</div><div style="font-weight:600;">${m.churchDepartment || "—"}${m.isLeader ? " · Leader" : ""}</div></div>
           <div><div class="summary-label">Date Joined</div><div style="font-weight:600;">${m.joinDate ? formatDate(m.joinDate) : "—"}</div></div>
           <div><div class="summary-label">Attendance Rate</div><div style="font-weight:600;">${m.attendanceRate}%</div></div>
           <div><div class="summary-label">Growth Stage</div><div style="font-weight:600;">${m.growthStage}</div></div>
@@ -258,29 +288,35 @@
     document.getElementById("search-input").addEventListener("input", renderMembers);
     document.getElementById("filter-status").addEventListener("change", renderMembers);
 
-    document.getElementById("member-form").addEventListener("submit", (e) => {
+    document.getElementById("member-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const id = document.getElementById("member-id").value;
       const data = {
         name: document.getElementById("m-name").value.trim(),
         phone: document.getElementById("m-phone").value.trim(),
         email: document.getElementById("m-email").value.trim(),
+        department: document.getElementById("m-department").value.trim(),
+        course: document.getElementById("m-course").value.trim(),
+        churchDepartment: document.getElementById("m-church-dept").value.trim(),
         gender: document.getElementById("m-gender").value,
         joinDate: document.getElementById("m-joined").value,
         growthStage: document.getElementById("m-stage").value,
         status: document.getElementById("m-status").value,
+        isLeader: document.getElementById("m-isleader").checked,
         notes: document.getElementById("m-notes").value.trim()
       };
       if (!data.name) { showToast("Please enter the member's name.", "error"); return; }
 
-      if (id) {
-        updateMember(id, data);
-        showToast("Member updated successfully.", "success");
-      } else {
-        data.cellId = cellId;
-        addMember(data);
-        showToast("Member added successfully.", "success");
-      }
+      try {
+        if (id) {
+          await updateMember(id, data);
+          showToast("Member updated successfully.", "success");
+        } else {
+          data.cellId = cellId;
+          await addMember(data);
+          showToast("Member added successfully.", "success");
+        }
+      } catch (err) { showToast(err.message, "error"); return; }
       membersCache = getMembers(cellId);
       renderMembers();
       closeModal("member-modal");

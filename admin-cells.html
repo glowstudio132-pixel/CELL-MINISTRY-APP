@@ -9,6 +9,7 @@
     var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.setAttribute("data-theme", theme);
   } catch (e) {}
+  try { if (localStorage.getItem("ceCampusSidebarCollapsed") === "1") document.documentElement.setAttribute("data-sidebar", "collapsed"); } catch (e) {}
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -136,6 +137,8 @@
   </div>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="utils.js"></script>
 <script src="theme.js"></script>
 <script src="auth.js"></script>
@@ -143,9 +146,10 @@
 <script src="components.js"></script>
 
 <script>
-  const session = requireRole("administrator");
+  let session = null;
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    session = await bootPage("administrator");
     if (!session) return;
     initProfileMenu("profile-menu-slot", session);
 
@@ -208,19 +212,20 @@
       openModal("cell-modal");
     };
 
-    document.getElementById("cell-form").addEventListener("submit", (e) => {
+    document.getElementById("cell-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const chapterId = document.getElementById("c-chapter").value;
       const chapter = getChapterById(chapterId);
       const name = document.getElementById("c-name").value.trim();
       if (!name) { showToast("Please enter a cell name.", "error"); return; }
-      addCell({
-        chapterId, groupId: chapter.groupId, name,
-        meetingDay: document.getElementById("c-day").value.trim(),
-        meetingTime: document.getElementById("c-time").value.trim(),
-        location: document.getElementById("c-location").value.trim(),
-        status: "Active"
-      });
+      try {
+        await addCell({
+          chapterId, name,
+          meetingDay: document.getElementById("c-day").value.trim(),
+          meetingTime: document.getElementById("c-time").value.trim(),
+          location: document.getElementById("c-location").value.trim()
+        });
+      } catch (err) { showToast(err.message, "error"); return; }
       showToast("Cell added successfully.", "success");
       closeModal("cell-modal");
       window.location.reload();
@@ -255,9 +260,10 @@
       openModal("view-cell-modal");
     };
 
-    window.saveCellStatus = function (id) {
+    window.saveCellStatus = async function (id) {
       const status = document.getElementById("edit-cell-status").value;
-      updateCell(id, { status });
+      try { await updateCell(id, { status }); }
+      catch (err) { showToast(err.message, "error"); return; }
       showToast("Cell updated successfully.", "success");
       closeModal("view-cell-modal");
       renderCells();

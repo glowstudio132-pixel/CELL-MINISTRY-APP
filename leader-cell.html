@@ -9,6 +9,7 @@
     var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.setAttribute("data-theme", theme);
   } catch (e) {}
+  try { if (localStorage.getItem("ceCampusSidebarCollapsed") === "1") document.documentElement.setAttribute("data-sidebar", "collapsed"); } catch (e) {}
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -98,6 +99,25 @@
           </div>
         </div>
       </div>
+      <div class="modal-overlay hidden" id="edit-cell-modal">
+        <div class="modal">
+          <div class="modal-header"><h3 style="font-size:16px;">Edit Cell Details</h3><button class="modal-close" onclick="closeModal('edit-cell-modal')">&times;</button></div>
+          <div class="modal-body">
+            <form id="edit-cell-form">
+              <div class="field"><label>Cell Name</label><input class="input" id="ec-name" maxlength="60" required /></div>
+              <div class="field"><label>Meeting Day</label>
+                <select class="select" id="ec-day">
+                  <option value="">Not set</option>
+                  <option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+                </select>
+              </div>
+              <div class="field"><label>Meeting Time</label><input class="input" type="time" id="ec-time" /></div>
+              <div class="field"><label>Location</label><input class="input" id="ec-location" maxlength="100" placeholder="e.g. Hostel A, Room 12" /></div>
+              <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 </div>
@@ -112,6 +132,8 @@
   </div>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="utils.js"></script>
 <script src="theme.js"></script>
 <script src="auth.js"></script>
@@ -119,11 +141,13 @@
 <script src="components.js"></script>
 
 <script>
-  const session = requireRole("cell_leader");
-  const cellId = session ? (session.cellId || null) : null;
+  let session = null;
+  let cellId = null;
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    session = await bootPage("cell_leader");
     if (!session) return;
+    cellId = session.cellId || null;
     initProfileMenu("profile-menu-slot", session);
 
     function goLogout() { confirmAction("Are you sure you want to end your current session?", logout, { title: "Sign out?", confirmLabel: "Sign Out" }); }
@@ -137,19 +161,61 @@
 
     if (cellId) {
       document.getElementById("cell-content").style.display = "";
-      const cell = getCellById(cellId);
+      function fmtTime(t) {
+        if (!t) return "Not set";
+        const m = /^(\d{1,2}):(\d{2})$/.exec(t);
+        if (!m) return t; // keep older free-text values as they were typed
+        let h = parseInt(m[1], 10); const ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12;
+        return h + ":" + m[2] + " " + ap;
+      }
+      function renderCellInfo() {
+        const cell = getCellById(cellId);
+        const members = getMembers(cellId);
+        document.getElementById("cell-info-panel").innerHTML = `
+          <div class="panel-head">
+            <div class="u-flex u-center u-gap-12" style="flex-wrap:wrap;"><h3>${escapeHtml(cell.name)}</h3><span class="badge ${statusBadgeClass(cell.status)}">${cell.status}</span></div>
+            <button class="btn btn-secondary btn-sm" id="edit-cell-btn"><i data-lucide="pencil"></i> Edit Details</button>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px;">
+            <div><div class="summary-label">Chapter</div><div style="font-weight:600;">${session.chapter || "—"}</div></div>
+            <div><div class="summary-label">Group</div><div style="font-weight:600;">${session.group || "—"}</div></div>
+            <div><div class="summary-label">Meeting Day</div><div style="font-weight:600;">${escapeHtml(cell.meetingDay || "Not set")}</div></div>
+            <div><div class="summary-label">Meeting Time</div><div style="font-weight:600;">${escapeHtml(fmtTime(cell.meetingTime))}</div></div>
+            <div><div class="summary-label">Location</div><div style="font-weight:600;">${escapeHtml(cell.location || "Not set")}</div></div>
+            <div><div class="summary-label">Members</div><div style="font-weight:600;">${members.length}</div></div>
+          </div>
+        `;
+        document.getElementById("edit-cell-btn").addEventListener("click", openEditCell);
+        lucide.createIcons();
+      }
+      function openEditCell() {
+        const c = getCellById(cellId);
+        document.getElementById("ec-name").value = c.name || "";
+        document.getElementById("ec-day").value = c.meetingDay || "";
+        document.getElementById("ec-time").value = /^\d{1,2}:\d{2}$/.test(c.meetingTime || "") ? c.meetingTime.padStart(5, "0") : "";
+        document.getElementById("ec-location").value = c.location || "";
+        openModal("edit-cell-modal");
+      }
+      document.getElementById("edit-cell-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = document.getElementById("ec-name").value.trim();
+        if (!name) { showToast("Please enter a cell name.", "error"); return; }
+        try {
+          await updateCell(cellId, {
+            name,
+            meetingDay: document.getElementById("ec-day").value,
+            meetingTime: document.getElementById("ec-time").value,
+            location: document.getElementById("ec-location").value.trim()
+          });
+        } catch (err) { showToast(err.message, "error"); return; }
+        updateSessionFields({ cell: name });
+        session.cell = name;
+        renderCellInfo();
+        closeModal("edit-cell-modal");
+        showToast("Cell details updated.", "success");
+      });
       const members = getMembers(cellId);
-      document.getElementById("cell-info-panel").innerHTML = `
-        <div class="panel-head"><h3>${cell.name}</h3><span class="badge ${statusBadgeClass(cell.status)}">${cell.status}</span></div>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px;">
-          <div><div class="summary-label">Chapter</div><div style="font-weight:600;">${session.chapter || "—"}</div></div>
-          <div><div class="summary-label">Group</div><div style="font-weight:600;">${session.group || "—"}</div></div>
-          <div><div class="summary-label">Meeting Day</div><div style="font-weight:600;">${cell.meetingDay || "Not set"}</div></div>
-          <div><div class="summary-label">Meeting Time</div><div style="font-weight:600;">${cell.meetingTime || "Not set"}</div></div>
-          <div><div class="summary-label">Location</div><div style="font-weight:600;">${cell.location || "Not set"}</div></div>
-          <div><div class="summary-label">Members</div><div style="font-weight:600;">${members.length}</div></div>
-        </div>
-      `;
+      renderCellInfo();
       document.getElementById("member-count-label").textContent = members.length + " total";
       const body = document.getElementById("cell-members-body");
       if (members.length) {

@@ -9,6 +9,7 @@
     var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.setAttribute("data-theme", theme);
   } catch (e) {}
+  try { if (localStorage.getItem("ceCampusSidebarCollapsed") === "1") document.documentElement.setAttribute("data-sidebar", "collapsed"); } catch (e) {}
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -126,6 +127,8 @@
   </div>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="utils.js"></script>
 <script src="theme.js"></script>
 <script src="auth.js"></script>
@@ -133,11 +136,13 @@
 <script src="components.js"></script>
 
 <script>
-  const session = requireRole("cell_leader");
-  const cellId = session ? (session.cellId || null) : null;
+  let session = null;
+  let cellId = null;
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    session = await bootPage("cell_leader");
     if (!session) return;
+    cellId = session.cellId || null;
     initProfileMenu("profile-menu-slot", session);
 
     function goLogout() { confirmAction("Are you sure you want to end your current session?", logout, { title: "Sign out?", confirmLabel: "Sign Out" }); }
@@ -151,7 +156,7 @@
 
     if (cellId) {
       document.getElementById("offerings-content").style.display = "";
-      document.getElementById("o-date").value = new Date().toISOString().slice(0, 10);
+      document.getElementById("o-date").value = localISODate();
 
       function renderOfferings() {
         const list = getOfferings(cellId);
@@ -168,23 +173,25 @@
         `).join("");
       }
 
-      document.getElementById("offering-form").addEventListener("submit", (e) => {
+      document.getElementById("offering-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         const amount = parseFloat(document.getElementById("o-amount").value);
         if (!amount || amount <= 0) { showToast("Please enter a valid amount.", "error"); return; }
-        recordOffering({
-          cellId,
-          date: document.getElementById("o-date").value,
-          meeting: document.getElementById("o-meeting").value.trim() || "Weekly Cell Meeting",
-          type: document.getElementById("o-type").value,
-          amount,
-          method: document.getElementById("o-method").value,
-          recordedBy: session.name,
-          notes: document.getElementById("o-notes").value.trim()
-        });
+        try {
+          await recordOffering({
+            cellId,
+            date: document.getElementById("o-date").value,
+            meeting: document.getElementById("o-meeting").value.trim() || "Weekly Cell Meeting",
+            type: document.getElementById("o-type").value,
+            amount,
+            method: document.getElementById("o-method").value,
+            recordedBy: session.name,
+            notes: document.getElementById("o-notes").value.trim()
+          });
+        } catch (err) { showToast(err.message, "error"); return; }
         showToast("Offering recorded successfully.", "success");
         document.getElementById("offering-form").reset();
-        document.getElementById("o-date").value = new Date().toISOString().slice(0, 10);
+        document.getElementById("o-date").value = localISODate();
         renderOfferings();
       });
 

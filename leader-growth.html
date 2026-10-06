@@ -9,6 +9,7 @@
     var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.setAttribute("data-theme", theme);
   } catch (e) {}
+  try { if (localStorage.getItem("ceCampusSidebarCollapsed") === "1") document.documentElement.setAttribute("data-sidebar", "collapsed"); } catch (e) {}
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -94,8 +95,23 @@
             <div style="height:260px;"><canvas id="growth-donut"></canvas></div>
           </div>
           <div class="panel">
-            <div class="panel-head"><h3>Attendance trend</h3></div>
-            <div style="height:260px;" id="growth-attendance-wrap"><canvas id="growth-attendance"></canvas></div>
+            <div class="panel-head"><h3>This week at a glance</h3></div>
+            <div id="week-glance"></div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:0;">
+          <div class="panel-head" style="flex-wrap:wrap; gap:12px;">
+            <h3>Weekly trends</h3>
+            <select class="select" id="trend-weeks" style="width:150px;">
+              <option value="4">Last 4 weeks</option><option value="8" selected>Last 8 weeks</option><option value="12">Last 12 weeks</option>
+            </select>
+          </div>
+          <div class="panel-grid-2">
+            <div><div class="summary-label" style="margin-bottom:8px;">Members</div><div style="height:220px;"><canvas id="tr-members"></canvas></div></div>
+            <div><div class="summary-label" style="margin-bottom:8px;">First timers</div><div style="height:220px;"><canvas id="tr-firsttimers"></canvas></div></div>
+            <div><div class="summary-label" style="margin-bottom:8px;">Offerings</div><div style="height:220px;"><canvas id="tr-offerings"></canvas></div></div>
+            <div><div class="summary-label" style="margin-bottom:8px;">Attendance rate</div><div style="height:220px;"><canvas id="tr-rate"></canvas></div></div>
           </div>
         </div>
       </div>
@@ -113,6 +129,8 @@
   </div>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="utils.js"></script>
 <script src="theme.js"></script>
 <script src="auth.js"></script>
@@ -121,11 +139,13 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="charts.js"></script>
 <script>
-  const session = requireRole("cell_leader");
-  const cellId = session ? (session.cellId || null) : null;
+  let session = null;
+  let cellId = null;
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    session = await bootPage("cell_leader");
     if (!session) return;
+    cellId = session.cellId || null;
     initProfileMenu("profile-menu-slot", session);
 
     function goLogout() { confirmAction("Are you sure you want to end your current session?", logout, { title: "Sign out?", confirmLabel: "Sign Out" }); }
@@ -167,12 +187,18 @@
         document.getElementById("growth-donut").parentElement.innerHTML = `<div class="empty-state"><h4>No members yet</h4></div>`;
       }
 
-      const history = getAttendance(cellId).slice(0, 6).reverse();
-      if (history.length) {
-        renderLineChart("growth-attendance", history.map(h => formatDate(h.date, { day: "numeric", month: "short" })), history.map(h => h.present), { label: "Present" });
-      } else {
-        document.getElementById("growth-attendance-wrap").innerHTML = `<div class="empty-state"><h4>No attendance recorded yet</h4></div>`;
-      }
+      const cur = getWeeklySeries([cellId], 1)[0];
+      document.getElementById("week-glance").innerHTML = [
+        ["Attendance rate", cur.attendanceRate == null ? "No data yet" : cur.attendanceRate + "%"],
+        ["First timers", cur.firstTimers],
+        ["Offerings", formatNaira(cur.offerings)],
+        ["Total present (all meetings)", cur.present]
+      ].map(r => `<div style="display:flex; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--line-200);"><span style="color:var(--ink-500);">${r[0]}</span><strong>${r[1]}</strong></div>`).join("");
+
+      const trendIds = { members: "tr-members", firstTimers: "tr-firsttimers", offerings: "tr-offerings", rate: "tr-rate" };
+      const drawTrends = () => renderGrowthTrends(getWeeklySeries([cellId], parseInt(document.getElementById("trend-weeks").value, 10)), trendIds);
+      document.getElementById("trend-weeks").addEventListener("change", drawTrends);
+      drawTrends();
     } else {
       document.getElementById("growth-content").style.display = "none";
     }

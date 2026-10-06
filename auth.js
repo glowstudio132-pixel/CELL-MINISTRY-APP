@@ -1,41 +1,15 @@
 /* ============================================================
-   CE CAMPUS — AUTH (DEMO ONLY)
-   -----------------------------------------------------------
-   Frontend authentication is for demonstration only.
-   Production authentication must be handled by a secure backend.
-   Role permissions must be enforced server-side.
-   -----------------------------------------------------------
-   This file only decides what the UI shows. Swapping to a real
-   backend later means replacing login()/getCurrentUser()/logout()
-   with real API calls — every other page calls only the helpers
-   below, never localStorage/sessionStorage directly.
+   CE CAMPUS — AUTH (Supabase)
+   Real accounts: email + password, and Google. Roles come from the
+   database (profiles.role), never from the browser. Administrators are
+   invited by email (see supabase/schema.sql, table admin_invites).
+
+   Pages call:   session = await bootPage("cell_leader" | "administrator")
+   which signs the visitor in (or redirects to login.html), loads the
+   data they are allowed to see, and returns the session object.
    ============================================================ */
 
-const AUTH_KEY = "ceCampusAuth_v2";
-
-/* ---------- Demo accounts ---------- */
-const DEMO_ACCOUNTS = {
-  cell_leader: {
-    id: "demo-user-001",
-    name: "Daniel Etim",
-    email: "leader@demo.com",
-    password: "leader123",
-    role: "cell_leader",
-    leaderId: "leader1"
-  },
-  administrator: {
-    id: "demo-admin-001",
-    name: "Pastor Wale Adaeze",
-    email: "admin@demo.com",
-    password: "admin123",
-    role: "administrator",
-    adminType: "zonal_admin",
-    groupId: null,
-    groupName: null
-  }
-};
-
-/* ---------- Permissions (frontend-only, for future backend parity) ---------- */
+/* ---------- Permissions (for reference; the database enforces the real rules) ---------- */
 const PERMISSIONS = {
   administrator: [
     "viewGroups", "manageGroups", "viewChapters", "manageChapters",
@@ -48,156 +22,279 @@ const PERMISSIONS = {
   ]
 };
 
-function hasPermission(permission) {
-  const user = getCurrentUser();
-  if (!user) return false;
-  return (PERMISSIONS[user.role] || []).includes(permission);
+let _sb = null;     // Supabase client (one per page)
+let _user = null;   // the signed-in user's session object (in memory only)
+
+/* ---------- Supabase client ---------- */
+function configIsMissing() {
+  const c = window.CE_CONFIG || {};
+  const bad = v => !v || /PASTE_|YOUR_/i.test(v);
+  return bad(c.SUPABASE_URL) || bad(c.SUPABASE_ANON_KEY);
 }
 
-/* ---------- Storage: localStorage if "remember me", else sessionStorage ---------- */
-function storeSession(session, remember) {
-  const payload = JSON.stringify(session);
-  if (remember) {
-    localStorage.setItem(AUTH_KEY, payload);
-    sessionStorage.removeItem(AUTH_KEY);
+function getSupabase() {
+  if (_sb) return _sb;
+  if (!window.supabase || typeof window.supabase.createClient !== "function") {
+    throw new Error("The Supabase library could not load. Check your internet connection and refresh.");
+  }
+  if (configIsMissing()) {
+    throw new Error("Supabase isn't connected yet. Open supabase-config.js and paste your Project URL and anon key (see SETUP.md).");
+  }
+  _sb = window.supabase.createClient(window.CE_CONFIG.SUPABASE_URL, window.CE_CONFIG.SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: "pkce" }
+  });
+  return _sb;
+}
+
+function pageUrl(name) { return new URL(name, window.location.href).href; }
+
+function friendlyAuthError(error) {
+  const m = (error && error.message) || "";
+  if (/invalid login credentials/i.test(m)) return "Invalid login details. Please check your email and password.";
+  if (/email not confirmed/i.test(m)) return "Please confirm your email first. Check your inbox for the confirmation link.";
+  if (/rate limit|too many/i.test(m)) return "Too many attempts. Please wait a minute and try again.";
+  if (/failed to fetch|network/i.test(m)) return "Network problem. Check your connection and try again.";
+  if (/password should be at least/i.test(m)) return "Password must be at least 6 characters.";
+  if (/unsupported provider|provider is not enabled/i.test(m)) return "Google sign-in isn't switched on in Supabase yet (see SETUP.md).";
+  return m || "Something went wrong. Please try again.";
+}
+
+/* ---------- Loading / fatal-error screens ---------- */
+function showBootLoader() {
+  if (document.getElementById("boot-loader")) return;
+  const el = document.createElement("div");
+  el.id = "boot-loader";
+  el.textContent = "Loading…";
+  const main = document.querySelector(".main");
+  if (main) {
+    // Keep the sidebar on screen while data loads; only the page area waits.
+    main.classList.add("booting");
+    main.appendChild(el);
   } else {
-    sessionStorage.setItem(AUTH_KEY, payload);
-    localStorage.removeItem(AUTH_KEY);
+    el.style.cssText = "position:fixed; inset:0; z-index:9998; background:var(--paper-0, #fff); display:flex; align-items:center; justify-content:center; font-family:Inter,sans-serif; color:var(--ink-500, #656b87); font-size:14px;";
+    document.body.appendChild(el);
   }
 }
+function hideBootLoader() {
+  const el = document.getElementById("boot-loader");
+  if (el) el.remove();
+  const main = document.querySelector(".main");
+  if (main) main.classList.remove("booting");
+}
+function showFatal(message) {
+  hideBootLoader();
+  const el = document.createElement("div");
+  el.style.cssText = "position:fixed; inset:0; z-index:9999; background:var(--paper-0, #fff); display:flex; align-items:center; justify-content:center; padding:24px; font-family:Inter,sans-serif;";
+  el.innerHTML = `<div style="max-width:440px; text-align:center;">
+      <h2 style="margin-bottom:10px; color:var(--ink-900, #10142b);">We couldn't load the app</h2>
+      <p style="color:var(--ink-500, #656b87); line-height:1.6; margin-bottom:18px;">${escapeHtml(message)}</p>
+      <button class="btn btn-primary" onclick="window.location.reload()">Try again</button>
+      <div style="margin-top:12px;"><a href="login.html" style="color:var(--royal-600, #3346d6); font-size:13px;">Back to sign in</a></div>
+    </div>`;
+  document.body.appendChild(el);
+}
 
-function getCurrentUser() {
+/* ---------- Profile / session ---------- */
+async function fetchProfile(sb, userId) {
+  const { data, error } = await sb.from("profiles").select("*").eq("id", userId).maybeSingle();
+  if (error) throw new Error(friendlyAuthError(error));
+  return data;
+}
+
+async function signedAvatarUrl(path) {
+  if (!path) return null;
   try {
-    const fromLocal = localStorage.getItem(AUTH_KEY);
-    if (fromLocal) return JSON.parse(fromLocal);
-    const fromSession = sessionStorage.getItem(AUTH_KEY);
-    if (fromSession) return JSON.parse(fromSession);
-    return null;
-  } catch (e) {
-    return null;
-  }
+    const { data } = await getSupabase().storage.from("avatars").createSignedUrl(path, 3600);
+    return data ? data.signedUrl : null;
+  } catch (e) { return null; }
 }
 
-function isAuthenticated() {
-  return !!getCurrentUser();
-}
-
-function isAdmin() {
-  const u = getCurrentUser();
-  return !!u && u.role === "administrator";
-}
-
-function isCellLeader() {
-  const u = getCurrentUser();
-  return !!u && u.role === "cell_leader";
-}
-
-/* ---------- Login / logout ---------- */
-function login(role, email, password, remember) {
-  if (!role) return { ok: false, field: "role", message: "Please select your account type." };
-  if (!email) return { ok: false, field: "email", message: "Please enter your email or username." };
-  if (!password) return { ok: false, field: "password", message: "Please enter your password." };
-
-  let account = DEMO_ACCOUNTS[role];
-  let matched = account && account.email.toLowerCase() === email.trim().toLowerCase() && account.password === password;
-
-  // Also check accounts created through the registration page.
-  if (!matched && typeof findRegisteredAccount === "function") {
-    const registered = findRegisteredAccount(email.trim());
-    if (registered && registered.role === role && registered.password === password) {
-      account = registered;
-      matched = true;
-    }
-  }
-
-  if (!matched) {
-    return { ok: false, field: "form", message: "Invalid login details. Please check your email and password." };
-  }
-
-  const session = {
-    id: account.id,
-    name: account.name,
-    email: account.email,
-    role: account.role
+/* Builds the object every page uses as `session`. */
+async function buildSession(profile) {
+  const user = {
+    id: profile.id,
+    name: profile.full_name || profile.email,
+    email: profile.email,
+    phone: profile.phone || "",
+    role: profile.role,
+    photoPath: profile.photo_path || null,
+    photo: await signedAvatarUrl(profile.photo_path),
+    emailReminders: profile.email_reminders !== false
   };
-
-  // Enrich a Cell Leader's session with their cell/chapter/group context,
-  // pulled from the demo data layer (js/data.js must be loaded first).
-  if (account.role === "cell_leader") {
-    session.group = account.group || null;
-    session.chapter = account.chapter || null;
-    session.cell = account.cellName || account.cell || null;
-    if (account.leaderId && typeof getCellForLeader === "function") {
-      session.leaderId = account.leaderId;
-      const cell = getCellForLeader(account.leaderId);
+  if (profile.role === "administrator") {
+    user.adminType = profile.admin_type || "zonal_admin";
+    user.groupId = profile.group_id || null;
+    const g = (typeof getGroupById === "function" && profile.group_id) ? getGroupById(profile.group_id) : null;
+    user.groupName = g ? g.name : null;
+  } else {
+    user.leaderId = profile.id;
+    user.cellId = profile.cell_id || null;
+    user.cell = user.group = user.chapter = null;
+    if (profile.cell_id && typeof getCellById === "function") {
+      const cell = getCellById(profile.cell_id);
       if (cell) {
-        session.cell = cell.name;
-        session.cellId = cell.id;
-        const chapter = (typeof getChapterById === "function" ? getChapterById(cell.chapterId) : null);
-        const group = (typeof getGroupById === "function" ? getGroupById(cell.groupId) : null);
-        session.chapter = chapter ? chapter.name : session.chapter;
-        session.group = group ? group.name : session.group;
+        user.cell = cell.name;
+        const ch = getChapterById(cell.chapterId), gr = getGroupById(cell.groupId);
+        user.chapter = ch ? ch.name : null;
+        user.group = gr ? gr.name : null;
       }
     }
   }
-
-  // Enrich an Administrator's session with their admin type and, for a
-  // Group Administrator, the specific group they're scoped to.
-  if (account.role === "administrator") {
-    session.adminType = account.adminType || "zonal_admin";
-    session.groupId = account.groupId || null;
-    session.groupName = account.groupName || null;
-  }
-
-  storeSession(session, !!remember);
-  return { ok: true, session };
+  return user;
 }
 
-function logout() {
-  localStorage.removeItem(AUTH_KEY);
-  sessionStorage.removeItem(AUTH_KEY);
-  window.location.href = "login.html";
+function getCurrentUser() { return _user; }
+function updateSessionFields(changes) { if (_user) Object.assign(_user, changes); }
+function hasPermission(permission) {
+  return !!_user && (PERMISSIONS[_user.role] || []).includes(permission);
 }
 
-/* ---------- Redirects ---------- */
 function dashboardPathFor(role) {
   return role === "administrator" ? "admin-dashboard.html" : "leader-dashboard.html";
 }
-
 function redirectByRole(user) {
-  user = user || getCurrentUser();
+  user = user || _user;
   window.location.href = user ? dashboardPathFor(user.role) : "login.html";
 }
 
-/* Call at the very top of any protected page. */
-function requireAuth() {
-  const user = getCurrentUser();
-  if (!user) {
-    window.location.href = "login.html";
+/* ---------- Page bootstrap ----------
+   requiredRole: "cell_leader" | "administrator" | null (any signed-in user)
+   opts.skipData: don't load cell data (help page, profile setup)
+   opts.allowNoCell: let a leader without a cell stay on this page */
+async function bootPage(requiredRole, opts) {
+  opts = opts || {};
+  showBootLoader();
+  try {
+    const sb = getSupabase();
+    const { data: { session: authSession } } = await sb.auth.getSession();
+    if (!authSession) { window.location.replace("login.html"); return null; }
+
+    let profile = await fetchProfile(sb, authSession.user.id);
+    if (!profile) {
+      await sb.rpc("ensure_profile");
+      profile = await fetchProfile(sb, authSession.user.id);
+    }
+    if (!profile) throw new Error("We couldn't find your profile. Please sign out and sign in again.");
+
+    if (profile.role === "cell_leader" && !profile.cell_id && !opts.allowNoCell) {
+      window.location.replace("complete-profile.html");
+      return null;
+    }
+    if (requiredRole && profile.role !== requiredRole) {
+      window.location.replace(dashboardPathFor(profile.role));
+      return null;
+    }
+
+    if (!opts.skipData) await initData(profile);
+    _user = await buildSession(profile);
+
+    sb.auth.onAuthStateChange((event) => { if (event === "SIGNED_OUT") window.location.replace("login.html"); });
+    hideBootLoader();
+    return _user;
+  } catch (err) {
+    showFatal(err.message || "Something went wrong while loading.");
     return null;
   }
-  return user;
 }
 
-/* Call at the very top of a page restricted to one role,
-   e.g. requireRole("administrator") or requireRole("cell_leader"). */
-function requireRole(role) {
-  const user = requireAuth();
-  if (!user) return null;
-  if (user.role !== role) {
-    redirectByRole(user);
-    return null;
+/* After any sign-in: make sure a profile exists, apply an admin invite if
+   there is one, and say where the person should land. */
+async function routeSignedInUser() {
+  const sb = getSupabase();
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return null;
+  let profile = await fetchProfile(sb, session.user.id);
+  if (!profile) { await sb.rpc("ensure_profile"); profile = await fetchProfile(sb, session.user.id); }
+  if (!profile) return null;
+  if (profile.role === "cell_leader") {
+    const { data: claimed } = await sb.rpc("claim_admin_invite");
+    if (claimed) profile = await fetchProfile(sb, session.user.id);
   }
-  return user;
+  if (profile.role === "cell_leader" && !profile.cell_id) return { path: "complete-profile.html", profile };
+  return { path: dashboardPathFor(profile.role), profile };
 }
 
-/* ---------- Role-based UI helpers ---------- */
-/* Toggle elements with [data-role-admin] / [data-role-leader] to match the
-   current user's role. Call once a page has confirmed a valid session. */
-function applyRoleVisibility() {
-  const admin = isAdmin();
-  document.querySelectorAll("[data-role-admin]").forEach(el => { el.style.display = admin ? "" : "none"; });
-  document.querySelectorAll("[data-role-leader]").forEach(el => { el.style.display = admin ? "none" : ""; });
+/* ---------- Sign in / up / out ---------- */
+async function signInWithPassword(email, password) {
+  const { error } = await getSupabase().auth.signInWithPassword({ email, password });
+  return error ? { ok: false, message: friendlyAuthError(error) } : { ok: true };
 }
-function showAdminUI() { document.querySelectorAll("[data-role-admin]").forEach(el => { el.style.display = ""; }); }
-function showLeaderUI() { document.querySelectorAll("[data-role-leader]").forEach(el => { el.style.display = ""; }); }
+
+async function signInWithGoogle() {
+  const { error } = await getSupabase().auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: pageUrl("login.html"), queryParams: { prompt: "select_account" } }
+  });
+  return error ? { ok: false, message: friendlyAuthError(error) } : { ok: true };
+}
+
+/* Email sign-up. The cell details ride along as metadata; the database
+   (never the browser) decides the role and creates the cell. */
+async function signUpWithEmail(info) {
+  const { data, error } = await getSupabase().auth.signUp({
+    email: info.email,
+    password: info.password,
+    options: {
+      emailRedirectTo: pageUrl("login.html"),
+      data: { full_name: info.fullName, chapter_id: info.chapterId || null, cell_name: info.cellName || null }
+    }
+  });
+  if (error) return { ok: false, message: friendlyAuthError(error) };
+  if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    return { ok: false, message: "An account with this email already exists." };
+  }
+  return { ok: true, signedIn: !!data.session };
+}
+
+async function sendPasswordReset(email) {
+  const { error } = await getSupabase().auth.resetPasswordForEmail(email, { redirectTo: pageUrl("reset-password.html") });
+  return error ? { ok: false, message: friendlyAuthError(error) } : { ok: true };
+}
+
+async function logout() {
+  try { await getSupabase().auth.signOut(); } catch (e) { /* still leave */ }
+  window.location.href = "login.html";
+}
+
+/* ---------- Editing your own profile ---------- */
+/* changes: { name, phone, photo }  photo: undefined = keep, null = remove, data URL = new */
+async function saveMyProfile(changes) {
+  const sb = getSupabase();
+  const u = _user;
+  const patch = { full_name: changes.name, phone: changes.phone || null };
+  let uploadedPath = null;
+
+  if (changes.photo !== undefined) {
+    if (changes.photo) {
+      const blob = await dataUrlToBlob(changes.photo);
+      uploadedPath = u.id + "/avatar-" + Date.now() + ".jpg";
+      const up = await sb.storage.from("avatars").upload(uploadedPath, blob, { contentType: "image/jpeg" });
+      if (up.error) throw new Error("Could not upload your photo. " + friendlyAuthError(up.error));
+      patch.photo_path = uploadedPath;
+    } else {
+      patch.photo_path = null;
+    }
+  }
+
+  const { error } = await sb.from("profiles").update(patch).eq("id", u.id);
+  if (error) {
+    if (uploadedPath) await sb.storage.from("avatars").remove([uploadedPath]);
+    throw new Error(friendlyAuthError(error));
+  }
+  if (changes.photo !== undefined && u.photoPath) await sb.storage.from("avatars").remove([u.photoPath]); // tidy old file
+  u.name = changes.name;
+  u.phone = changes.phone || "";
+  if (changes.photo !== undefined) {
+    u.photoPath = patch.photo_path;
+    u.photo = await signedAvatarUrl(patch.photo_path);
+  }
+  const leader = typeof getLeaderById === "function" ? getLeaderById(u.id) : null;
+  if (leader) { leader.name = u.name; leader.phone = u.phone; }
+  return u;
+}
+
+async function setEmailReminders(flag) {
+  const { error } = await getSupabase().from("profiles").update({ email_reminders: !!flag }).eq("id", _user.id);
+  if (error) throw new Error(friendlyAuthError(error));
+  _user.emailReminders = !!flag;
+}

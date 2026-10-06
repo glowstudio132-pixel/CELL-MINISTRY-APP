@@ -9,6 +9,7 @@
     var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.setAttribute("data-theme", theme);
   } catch (e) {}
+  try { if (localStorage.getItem("ceCampusSidebarCollapsed") === "1") document.documentElement.setAttribute("data-sidebar", "collapsed"); } catch (e) {}
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -64,7 +65,7 @@
         <button class="menu-toggle" aria-label="Open menu"><span></span><span></span><span></span></button>
         <div class="topbar-title">
           <h1>Attendance</h1>
-          <p>Attendance records across every cell in your scope.</p>
+          <p>Daily attendance figures across every cell in your scope.</p>
         </div>
       </div>
       <div class="topbar-actions">
@@ -81,12 +82,37 @@
 
     <div class="page-body">
 <div class="summary-grid" id="att-summary"></div>
+
       <div class="panel">
-        <div class="panel-head"><h3>Attendance Records</h3></div>
+        <div class="panel-head" style="flex-wrap:wrap; gap:12px;">
+          <h3>Figures for a day</h3>
+          <input class="input" type="date" id="day-picker" style="width:170px;" />
+        </div>
+        <div id="day-cards" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px;"></div>
+        <div class="table-wrap" style="margin-top:16px;" id="day-cells-wrap">
+          <table class="data-table">
+            <thead><tr><th>Cell</th><th>Chapter</th><th>Meeting</th><th>Present</th><th>Absent</th><th>Excused</th><th>Visitors</th><th>Rate</th></tr></thead>
+            <tbody id="day-cells-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>All days</h3></div>
         <div class="table-wrap">
           <table class="data-table">
-            <thead><tr><th>Date</th><th>Cell</th><th>Chapter</th><th>Present</th><th>Absent</th><th>Rate</th></tr></thead>
+            <thead><tr><th>Date</th><th>Meeting</th><th>Cells reporting</th><th>Present</th><th>Absent</th><th>Excused</th><th>Visitors</th><th>Rate</th><th></th></tr></thead>
             <tbody id="attendance-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>First timers by week</h3></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Week</th><th>Cells reporting</th><th>First timers</th></tr></thead>
+            <tbody id="ft-body"></tbody>
           </table>
         </div>
       </div>
@@ -104,6 +130,8 @@
   </div>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="utils.js"></script>
 <script src="theme.js"></script>
 <script src="auth.js"></script>
@@ -111,9 +139,10 @@
 <script src="components.js"></script>
 
 <script>
-  const session = requireRole("administrator");
+  let session = null;
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    session = await bootPage("administrator");
     if (!session) return;
     initProfileMenu("profile-menu-slot", session);
 
@@ -135,43 +164,94 @@
     const scopeActivities = getActivities().filter(a => scopeCellIds.includes(a.cellId));
     const scopeReports = getReports().filter(r => scopeCellIds.includes(r.cellId));
 
-    const avgRate = scopeCells.length
-      ? Math.round(scopeCells.reduce((sum, c) => sum + getAttendanceRate(c.id), 0) / scopeCells.length * 10) / 10
-      : 0;
-    const cellsWithRecords = scopeCells.filter(c => getLatestAttendance(c.id)).length;
+    const $ = id => document.getElementById(id);
+    const today = localISODate();
+    const sessLabel = id => { const d = ATTENDANCE_SESSIONS.find(x => x.id === id); return d ? d.label : "General"; };
+    const sessOrder = id => { const i = ATTENDANCE_SESSIONS.findIndex(x => x.id === id); return i < 0 ? 99 : i; };
+    const rate = (p, t) => t ? Math.round((p / t) * 1000) / 10 + "%" : "—";
+    const cellById = Object.fromEntries(scopeCells.map(c => [c.id, c]));
+    const chapterName = id => { const ch = scopeChapters.find(x => x.id === id); return ch ? ch.name : "—"; };
 
-    document.getElementById("att-summary").innerHTML = [
-      { icon: "trending-up", tone: "success", value: avgRate + "%", label: "Average Attendance" },
-      { icon: "clipboard-check", tone: "royal", value: cellsWithRecords, label: "Cells Reporting" },
-      { icon: "users-round", tone: "royal", value: scopeCells.length, label: "Total Cells" }
+    const allAtt = scopeCells.flatMap(c => getAttendance(c.id));
+    const sum = (rows, k) => rows.reduce((t, a) => t + (a[k] || 0), 0);
+
+    // ---------- Summary (this week) ----------
+    const thisWeekStart = getWeekStart(today);
+    const weekPoint = getWeeklySeries(scopeCellIds, 1)[0];
+    const weekRows = allAtt.filter(a => getWeekStart(a.date) === thisWeekStart);
+    const cellsReporting = new Set(weekRows.map(a => a.cellId)).size;
+    $("att-summary").innerHTML = [
+      { icon: "trending-up", tone: "success", value: weekPoint.attendanceRate == null ? "—" : weekPoint.attendanceRate + "%", label: "Attendance Rate (this week)" },
+      { icon: "clipboard-check", tone: "royal", value: cellsReporting + " / " + scopeCells.length, label: "Cells Reporting This Week" },
+      { icon: "user-plus", tone: "success", value: weekPoint.firstTimers, label: "First Timers This Week" }
     ].map(c => `
       <div class="card summary-card">
         <div class="summary-top"><div class="summary-icon tone-${c.tone}"><i data-lucide="${c.icon}"></i></div></div>
         <div class="summary-value">${c.value}</div>
         <div class="summary-label">${c.label}</div>
-      </div>
-    `).join("");
+      </div>`).join("");
 
-    const allAttendance = scopeCells.flatMap(c => getAttendance(c.id).map(a => Object.assign({}, a, { cellName: c.name, chapterId: c.chapterId })))
-      .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    const body = document.getElementById("attendance-body");
-    if (!allAttendance.length) {
-      body.innerHTML = `<tr><td colspan="6"><div class="empty-state"><h4>No attendance recorded yet</h4><p>Records will appear here once cell leaders take attendance.</p></div></td></tr>`;
-    } else {
-      body.innerHTML = allAttendance.map(a => {
-        const chapter = scopeChapters.find(ch => ch.id === a.chapterId);
-        return `
-          <tr>
-            <td style="font-weight:600; color:var(--ink-900);">${formatDate(a.date)}</td>
-            <td>${a.cellName}</td>
-            <td>${chapter ? chapter.name : "—"}</td>
-            <td>${a.present}</td>
-            <td>${a.absent}</td>
-            <td>${a.total ? Math.round((a.present / a.total) * 100) : 0}%</td>
-          </tr>`;
+    // ---------- Figures for one day ----------
+    const latestDate = allAtt.length ? allAtt.map(a => a.date).sort().pop() : today;
+    $("day-picker").value = latestDate;
+    function renderDay() {
+      const date = $("day-picker").value;
+      const rows = allAtt.filter(a => a.date === date);
+      if (!rows.length) {
+        $("day-cards").innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h4>No attendance submitted for this day</h4><p>Pick another date, or check the "All days" table below.</p></div>`;
+        $("day-cells-wrap").style.display = "none";
+        return;
+      }
+      $("day-cells-wrap").style.display = "";
+      const ids = [...new Set(rows.map(a => a.session || ""))].sort((x, y) => sessOrder(x) - sessOrder(y));
+      $("day-cards").innerHTML = ids.map(sid => {
+        const r = rows.filter(a => (a.session || "") === sid);
+        return `<div class="card" style="padding:16px;">
+          <div style="font-weight:700; color:var(--ink-900);">${sessLabel(sid)}</div>
+          <div style="font-size:12.5px; color:var(--ink-500); margin-bottom:10px;">${r.length} cell${r.length === 1 ? "" : "s"} reporting</div>
+          <div style="font-family:var(--font-display); font-size:26px; font-weight:700;">${sum(r, "present")} <span style="font-size:13px; color:var(--ink-500); font-weight:500;">present · ${rate(sum(r, "present"), sum(r, "total"))}</span></div>
+          <div style="font-size:12.5px; color:var(--ink-500); margin-top:6px;">${sum(r, "absent")} absent · ${sum(r, "excused")} excused · ${sum(r, "visitors")} visitors</div>
+        </div>`;
       }).join("");
+      $("day-cells-body").innerHTML = rows
+        .sort((x, y) => sessOrder(x.session) - sessOrder(y.session) || (cellById[x.cellId]?.name || "").localeCompare(cellById[y.cellId]?.name || ""))
+        .map(a => `<tr>
+          <td style="font-weight:600; color:var(--ink-900);">${escapeHtml(cellById[a.cellId]?.name || "—")}</td>
+          <td>${chapterName(cellById[a.cellId]?.chapterId)}</td>
+          <td>${sessLabel(a.session)}</td>
+          <td>${a.present}</td><td>${a.absent}</td><td>${a.excused}</td><td>${a.visitors || 0}</td>
+          <td>${rate(a.present, a.total)}</td></tr>`).join("");
     }
+    $("day-picker").addEventListener("change", renderDay);
+    renderDay();
+
+    // ---------- All days (totals per date + meeting) ----------
+    const groups = {};
+    allAtt.forEach(a => { const k = a.date + "|" + (a.session || ""); (groups[k] = groups[k] || []).push(a); });
+    const keys = Object.keys(groups).sort((x, y) => y.split("|")[0].localeCompare(x.split("|")[0]) || sessOrder(x.split("|")[1]) - sessOrder(y.split("|")[1]));
+    $("attendance-body").innerHTML = keys.length ? keys.map(k => {
+      const [date, sid] = k.split("|"); const r = groups[k];
+      return `<tr>
+        <td style="font-weight:600; color:var(--ink-900);">${formatDate(date)}</td>
+        <td>${sessLabel(sid)}</td>
+        <td>${r.length}</td><td>${sum(r, "present")}</td><td>${sum(r, "absent")}</td><td>${sum(r, "excused")}</td><td>${sum(r, "visitors")}</td>
+        <td>${rate(sum(r, "present"), sum(r, "total"))}</td>
+        <td><button class="btn btn-secondary btn-sm" data-day="${date}">View day</button></td></tr>`;
+    }).join("") : `<tr><td colspan="9"><div class="empty-state"><h4>No attendance recorded yet</h4><p>Figures will appear here once cell leaders submit attendance.</p></div></td></tr>`;
+    document.querySelectorAll("#attendance-body [data-day]").forEach(btn => btn.addEventListener("click", () => {
+      $("day-picker").value = btn.dataset.day; renderDay();
+      $("day-picker").scrollIntoView({ behavior: "smooth", block: "center" });
+    }));
+
+    // ---------- First timers by week ----------
+    const ftSeries = getWeeklySeries(scopeCellIds, 12).reverse();
+    const ftRecs = scopeCells.flatMap(c => getFirstTimers(c.id));
+    $("ft-body").innerHTML = ftSeries.some(w => w.firstTimers > 0 || ftRecs.some(f => f.weekStart === w.weekStart))
+      ? ftSeries.map(w => `<tr>
+          <td style="font-weight:600; color:var(--ink-900);">${formatDate(w.weekStart, { day: "numeric", month: "short" })} – ${formatDate(addDaysISO(w.weekStart, 6))}</td>
+          <td>${new Set(ftRecs.filter(f => f.weekStart === w.weekStart).map(f => f.cellId)).size}</td>
+          <td>${w.firstTimers}</td></tr>`).join("")
+      : `<tr><td colspan="3"><div class="empty-state"><h4>No first timers submitted yet</h4></div></td></tr>`;
 
     lucide.createIcons();
   });

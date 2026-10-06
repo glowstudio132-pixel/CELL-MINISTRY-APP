@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem("ceCampusTheme");
+    var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  } catch (e) {}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Set up your cell · Campus Ministry BLW Zone B</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="responsive.css">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+
+<div class="auth-page">
+  <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" style="position:absolute; top:24px; right:24px; z-index:2;">
+    <i data-lucide="moon" class="theme-icon-light"></i>
+    <i data-lucide="sun" class="theme-icon-dark"></i>
+  </button>
+
+  <div class="auth-card-wrap" style="max-width:440px;">
+    <div class="auth-top">
+      <div class="auth-icon"><img src="blw-logo.png" alt="Campus Ministry BLW Zone B" /></div>
+      <h1>Set up your cell</h1>
+      <p id="cp-sub">One last step before you start.</p>
+    </div>
+
+    <div class="card auth-card" style="padding:28px;">
+      <div class="form-error" id="form-error"></div>
+      <form id="cp-form" novalidate>
+        <div class="field">
+          <label for="phone">Phone (optional)</label>
+          <input class="input" type="tel" id="phone" maxlength="20" autocomplete="tel" placeholder="e.g. 0801 234 5678" />
+          <span class="field-hint field-error" id="phone-error"></span>
+        </div>
+        <div class="field">
+          <label for="group">Select Group</label>
+          <select class="select" id="group"><option value="">Select a group</option></select>
+          <span class="field-hint field-error" id="group-error"></span>
+        </div>
+        <div class="field">
+          <label for="chapter">Select Chapter</label>
+          <select class="select" id="chapter" disabled><option value="">Select a group first</option></select>
+          <span class="field-hint field-error" id="chapter-error"></span>
+        </div>
+        <div class="field">
+          <label for="cellName">Cell Name</label>
+          <input class="input" type="text" id="cellName" maxlength="60" placeholder="e.g. Grace Cell" />
+          <span class="field-hint field-error" id="cellName-error"></span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="cp-btn" style="margin-top:6px;">
+          <span class="btn-spinner"></span>
+          <i data-lucide="check" class="btn-label-icon"></i>
+          <span class="btn-label-text">Create My Cell</span>
+        </button>
+      </form>
+      <p class="auth-foot">Not you? <a href="#" id="signout-link">Sign out</a></p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="utils.js"></script>
+<script src="theme.js"></script>
+<script src="data.js"></script>
+<script src="auth.js"></script>
+<script>
+  const groupSelect = document.getElementById("group");
+  const chapterSelect = document.getElementById("chapter");
+  const formError = document.getElementById("form-error");
+  const btn = document.getElementById("cp-btn");
+  let me = null;
+
+  function setFieldError(id, message) {
+    const el = document.getElementById(id + "-error");
+    el.textContent = message; el.style.display = message ? "block" : "none"; el.style.color = "var(--danger-600)";
+    return !!message;
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    me = await bootPage(null, { allowNoCell: true, skipData: true });
+    if (!me) return;
+    if (me.role === "administrator") { window.location.replace("admin-dashboard.html"); return; }
+    if (me.cellId) { window.location.replace("leader-dashboard.html"); return; }
+    document.getElementById("cp-sub").textContent = "Welcome, " + me.name.split(" ")[0] + ". Tell us where your cell belongs.";
+    document.getElementById("phone").value = me.phone || "";
+    try {
+      await loadReferenceData();
+      getGroups().forEach(g => {
+        const opt = document.createElement("option"); opt.value = g.id; opt.textContent = g.name; groupSelect.appendChild(opt);
+      });
+    } catch (err) { formError.textContent = err.message; formError.classList.add("show"); }
+    lucide.createIcons();
+  });
+
+  groupSelect.addEventListener("change", () => {
+    chapterSelect.innerHTML = "";
+    if (!groupSelect.value) { chapterSelect.disabled = true; chapterSelect.innerHTML = '<option value="">Select a group first</option>'; return; }
+    chapterSelect.disabled = false;
+    chapterSelect.innerHTML = '<option value="">Select a chapter</option>' +
+      getChapters(groupSelect.value).map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join("");
+  });
+
+  document.getElementById("cp-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    formError.classList.remove("show");
+    ["phone", "group", "chapter", "cellName"].forEach(id => setFieldError(id, ""));
+    const phone = document.getElementById("phone").value.trim();
+    const cellName = document.getElementById("cellName").value.trim();
+    let bad = false;
+    if (phone && !/^\+?[0-9 ()-]{7,20}$/.test(phone)) bad = setFieldError("phone", "Please enter a valid phone number.") || bad;
+    if (!groupSelect.value) bad = setFieldError("group", "Please select a group.") || bad;
+    if (!chapterSelect.value) bad = setFieldError("chapter", "Please select a chapter.") || bad;
+    if (!cellName) bad = setFieldError("cellName", "Please enter your cell name.") || bad;
+    if (bad) return;
+
+    btn.disabled = true; btn.classList.add("is-loading");
+    btn.querySelector(".btn-label-text").textContent = "Creating your cell...";
+    try {
+      await setupLeaderCell(chapterSelect.value, cellName, phone);
+      window.location.replace("leader-dashboard.html");
+    } catch (err) {
+      btn.disabled = false; btn.classList.remove("is-loading");
+      btn.querySelector(".btn-label-text").textContent = "Create My Cell";
+      formError.textContent = err.message; formError.classList.add("show");
+    }
+  });
+
+  document.getElementById("signout-link").addEventListener("click", (e) => { e.preventDefault(); logout(); });
+  lucide.createIcons();
+</script>
+</body>
+</html>

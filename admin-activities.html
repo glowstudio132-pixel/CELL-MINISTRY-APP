@@ -9,6 +9,7 @@
     var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.setAttribute("data-theme", theme);
   } catch (e) {}
+  try { if (localStorage.getItem("ceCampusSidebarCollapsed") === "1") document.documentElement.setAttribute("data-sidebar", "collapsed"); } catch (e) {}
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -96,6 +97,8 @@
   </div>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="utils.js"></script>
 <script src="theme.js"></script>
 <script src="auth.js"></script>
@@ -103,9 +106,10 @@
 <script src="components.js"></script>
 
 <script>
-  const session = requireRole("administrator");
+  let session = null;
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    session = await bootPage("administrator");
     if (!session) return;
     initProfileMenu("profile-menu-slot", session);
 
@@ -133,13 +137,25 @@
     if (!allActivities.length) {
       grid.innerHTML = `<div class="card" style="grid-column:1/-1;"><div class="empty-state"><h4>No activities recorded yet</h4><p>Activities logged by cell leaders will show up here.</p></div></div>`;
     } else {
-      grid.innerHTML = allActivities.map(a => `
+      grid.innerHTML = allActivities.map(a => {
+        const photos = a.photos || [];
+        const strip = photos.length ? `<div style="display:grid; grid-template-columns:repeat(${photos.length}, 1fr); gap:6px; margin-bottom:12px;">` + photos.map((p, i) => `
+          <div style="aspect-ratio:1; border-radius:8px; overflow:hidden; background:var(--line-200);">
+            <img src="${p.src}" alt="Activity photo" data-view="${a.id}:${i}" style="width:100%; height:100%; object-fit:cover; cursor:zoom-in; display:block;" />
+          </div>`).join("") + `</div>` : "";
+        return `
         <div class="card" style="padding:20px;">
-          <span class="badge badge-pending" style="margin-bottom:10px;">${a.category}</span>
-          <h4 style="font-size:15px; margin-bottom:6px;">${a.name}</h4>
-          <p style="font-size:13px; margin-bottom:10px; color:var(--ink-500);">${a.cellName}</p>
-          <div style="font-size:12.5px; color:var(--ink-500);">${formatDate(a.date)} · ${a.participants || 0} participants</div>
-        </div>`).join("");
+          ${strip}
+          <span class="badge badge-pending" style="margin-bottom:10px;">${escapeHtml(a.category)}</span>
+          <h4 style="font-size:15px; margin-bottom:6px;">${escapeHtml(a.name)}</h4>
+          <p style="font-size:13px; margin-bottom:10px; color:var(--ink-500);">${escapeHtml(a.cellName)}</p>
+          <div style="font-size:12.5px; color:var(--ink-500);">${formatDate(a.date)} · ${a.participants || 0} participants${photos.length ? " · " + photos.length + " photo" + (photos.length === 1 ? "" : "s") : ""}</div>
+        </div>`;
+      }).join("");
+      grid.querySelectorAll("[data-view]").forEach(img => img.addEventListener("click", () => {
+        const [id, i] = img.dataset.view.split(":"); const a = allActivities.find(x => x.id === id);
+        openPhotoViewer(a.photos[+i].src, a.name + " · " + a.cellName);
+      }));
     }
 
     lucide.createIcons();

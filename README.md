@@ -1,105 +1,48 @@
-# Campus Ministry BLW Zone B
+# Campus Ministry BLW Zone B: Cell Management Platform
 
-All files are flat in this one folder — no subfolders — so it can be deployed as-is.
+A web app for the 5 groups and 26 chapters of Campus Ministry BLW Zone B. Cell leaders run their
+cell (members, attendance, first timers, offerings, activities and photos, weekly reports, growth
+trends). Group and Zonal administrators see the figures for their scope.
 
-## Recent fixes
+The site files sit in one flat folder (plus `supabase/schema.sql`), so it can be hosted as-is on any static host.
 
-- **Landing page reworked** against a reference layout you shared (bright split hero with a photo-style collage, a thin announcement bar, a full-bleed stat band, a compact benefits grid): new structure is Announcement → Nav → Split Hero (copy left, icon collage right, hand-drawn underline accent) → Marquee → Stat Band (5 Groups / 26+ Chapters) → Benefits grid (4 cards) → the animated "cell" visual → a Reports feature spotlight → Groups chips → the 3 persona sections → Footer. Dropped the old centered hero, the 2-card intro row, the "Insights" mini-dashboard, and the 4 full-bleed color panels — consolidated into the leaner structure above.
-- **Fixed the login-page gradient**: the soft color glows behind the card had no blur, so on a light background they read as hard-edged colored boxes rather than ambient light. Added `filter: blur(70px)` and simplified to solid colors — now a proper soft glow in both themes.
-- **Scroll animations added**: sections fade/slide into view as you scroll (`.reveal` class + an `IntersectionObserver` in `app.js`), with staggered delays on grid items like the benefit cards. Falls back to fully visible immediately if `IntersectionObserver` isn't supported — nothing stays permanently hidden.
-- **Frontend polish pass — all three deferred items closed out:**
-  - **Mobile form grids fixed**: several 2-column form/detail layouts (Record Offering, Submit Report, the Add/Edit Member and View Cell modals, the landing page's insight tiles) had no mobile fallback — a real bug, not just missing polish. Added a shared `.grid-2` utility (`style.css`) that collapses to one column under 560px, and swapped all five in.
-  - **Profile dropdown now goes somewhere real**: "Profile" and "Account Settings" in the top-right profile menu now open the correct Settings page for your role (`leader-settings.html` or `admin-settings.html`) instead of showing a toast.
-  - **New `help.html`**: a real FAQ page reachable from the profile dropdown on both sides, with role-specific questions (Cell Leader vs Administrator) plus shared ones (theme, sign out), and a "back to dashboard" link that adapts to your role — or to Sign In if you're logged out.
-  - **New `admin-chapter-detail.html`**: a proper chapter detail page (stats + the cells in that chapter, with a "Manage Cells" shortcut into the filtered Cells page) — clicking a chapter from a Group's page now lands here instead of jumping straight into the Cells table. Includes the same Group Administrator access guard as the Group detail page.
-- **Reverted the stat-card gradients back to clean, neutral cards** with just a subtle colored icon chip — the earlier full-gradient treatment read as too loud/childish.
-- **The entire Admin portal is now real and fully working**, respecting the same Group Administrator / Zonal Administrator scoping as the dashboard:
-  - `admin-cells.html` — filterable table, Add Cell (modal), View/Edit status (modal)
-  - `admin-leaders.html` — searchable table of every cell leader in scope
-  - `admin-members.html` — searchable, filterable table of every member in scope
-  - `admin-attendance.html` — aggregated attendance records + average rate across scope
-  - `admin-offerings.html` — aggregated offering records + total across scope
-  - `admin-growth.html` — growth-stage donut chart, cells-by-group bar chart
-  - `admin-activities.html` — card grid of every activity across scope
-  - `admin-reports.html` — filterable table with a real "Mark Reviewed" action
-  - `admin-analytics.html` — attendance trend, offering trend, reporting-compliance bar
-  - `admin-notifications.html` — real, data-driven (cells needing attention, pending report reviews, chapters with no cells — nothing fake)
-  - `admin-settings.html` — profile info (shows Group or Zonal scope), dark-mode toggle, reminders preference
-  Added `updateCell()` and `updateReport()` to `data.js` to support this. The existing Dashboard/Groups/Group-detail pages had their "not available yet" toasts replaced with real navigation (the notification bell, the dashboard's cell "View" button, and clicking a chapter row now all go to real pages — clicking a chapter even pre-filters the Cells page to it).
-- **The entire Cell Leader portal is now real and fully working** — every sidebar link, bottom-nav item, and dashboard quick action leads to an actual functional page. Nothing says "not available" anymore on the Cell Leader side:
-  - `leader-cell.html` — cell details + member list
-  - `leader-members.html` — search/filter, Add/Edit member (modal), View member profile (modal), real validation
-  - `leader-attendance.html` — mark present/absent/excused per member, Mark All Present, visitors/first-timers, saves and shows history
-  - `leader-offerings.html` — record an offering, view history
-  - `leader-growth.html` — growth-stage donut chart, attendance trend chart, key stats
-  - `leader-activities.html` — Add Activity modal, card grid of logged activities
-  - `leader-reports.html` — weekly report form + history
-  - `leader-notifications.html` — real, data-driven notifications (e.g. "your report is due" only shows if it's actually not submitted yet — nothing fake)
-  - `leader-settings.html` — profile info, dark-mode toggle, a working reminders preference
-  All of them read/write through the same `data.js` functions as the dashboard, respect the "no cell yet" empty state, and share the exact same sidebar/topbar/nav chrome.
-- **Removed pink from the dashboard stat cards** — they now cycle through blue and green only (Offering and Activities on the Cell Leader dashboard, Total Members and Total Offering on the Admin dashboard were reassigned).
-- **Full rename to Campus Ministry BLW Zone B**: this build is scoped to one zone within Christ Embassy Campus Ministry, not the whole ministry — updated everywhere the old "Cell Ministry" / "Christ Embassy Campus Ministry" branding appeared (nav, sidebars, page titles, hero, persona sections, footer, login/register).
-- **Hero cleanup**: removed the pill/box background behind the hero eyebrow text (it's now plain styled text), and removed the "Access Dashboard" / "Explore Features" buttons from the hero.
-- **Blurry cell-meeting photo removed**: replaced with a self-contained animated "People → Cell → Growth" visual (SVG connection lines + floating member chips + a pulsing "Cell" core), so there's no photo left to go blurry on any screen size.
-- **Landing page color system**: standardized on blue (primary actions/stats), pink (members/growth), and green (attendance/success) across the landing page, login/register glow, and both dashboards — replacing the earlier purple/yellow/lime mix. Summary cards, quick-action icon chips, sticker badges, feature panels and persona panels all follow this now.
-- **Hero floating icons spread out**: more spacing, varied float distance/timing per icon, hidden below 900px so they never crowd or overlap on tablet/mobile.
-- **Dashboard greeting rebuilt**: "Good morning," now sits above the bold name+wave line (stacked by default, inline once there's room on wide screens) so long names never overlap, get cut off, or wrap awkwardly. A small badge under the name shows the Cell Leader's cell name, or the Administrator's group/zonal scope.
-- **Admin roles**: registration now supports **Group Administrator** (picks one of the 5 real groups) and **Zonal Administrator** (sees all 5, no group field). A Group Administrator's dashboard, Groups page, and group-detail page are all scoped to their own group only — including a redirect if they try to open another group's URL directly.
-- **Admin dashboard grid**: the two stacked summary-grids (with a fragile negative-margin hack) are now one grid that reflows cleanly (`repeat(auto-fit, minmax(190px,1fr))`) at any card count, so there's no more uneven/gappy last row.
-- **Mobile bottom nav**: each item is now a proper rounded button container, with the active one filled in blue — not just a bare icon+label floating on its own.
-- **Quick actions** on the Cell Leader dashboard now use colored icon chips (blue/pink/green) with a trailing chevron, instead of plain inline icons.
+## Get it running
 
-## Earlier fixes
+**Read [`SETUP.md`](SETUP.md).** In short: create a Supabase project, run
+`supabase/schema.sql`, paste your two keys into `supabase-config.js`, turn on Google sign-in,
+upload the folder, and invite your first administrator.
 
-- **Hero headline is now mega-bold**: huge, tight-leading, ultra-bold display type (inspired by a bold reference landing page you shared), with small floating accent badges around it and a stat line ("Built for 5 groups and 26 chapters...") beneath the subtitle.
-- **Two real photos added**: a cell-meeting photo now anchors a full-bleed "This is what a cell meeting looks like" band right under the hero, and a community group photo now fills the avatar in the "Anyone in the ministry" section — both are the images you uploaded, resized and compressed for web (`community-cell.jpg`, `community-group.jpg`). The other two persona sections (Cell Leaders, Administrators) keep icon-style avatars, not photos, per your note that icon/illustrated avatars are fine there.
-- Added a two-card intro block (pink + black) right under the hero for extra visual punch, matching the reference layout's card pairing.
-- **Landing page redesign**: bolder, more colorful visual language (sticker badges, a scrolling group-name marquee, alternating full-bleed color panels for each feature, big persona sections for Cell Leaders/Administrators/anyone new, a giant ghost-text footer wordmark). One deliberate change from the reference style: it avoids the word "magic" for a church product, using bold color and energy instead to keep the tone appropriate for a ministry audience.
-- **Sidebar is now theme-aware**: it used to be hardcoded dark navy in both light and dark mode. It now switches to a light surface in light mode and back to navy in dark mode, using the same token system as the rest of the app (`--sidebar-bg`, `--sidebar-text`, etc. in `style.css`).
-- **Sidebar can now collapse on desktop**: a toggle button in the sidebar header shrinks it to an icon-only rail (with hover tooltips) and remembers the choice across page loads (`components.js`, `initSidebarCollapse`). Mobile keeps its existing drawer behavior.
-- **Renamed** the app to **Campus Ministry BLW Zone B** throughout (nav/sidebar brand, page titles) — this build is scoped to one zone, not the whole ministry.
-- **Fixed a real bug**: `leader-dashboard.html`, `admin-dashboard.html`, `admin-groups.html`, `admin-group-detail.html`, `index.html`, `login.html` and `register.html` weren't all loading the same three stylesheets, which caused the oversized logo in the sidebar drawer and the boxy/bordered dark-mode toggle button. Every page now loads `style.css` + `components.css` + `responsive.css` consistently.
-- **Fixed dark mode text visibility**: headings, summary card values, and a few other text colors were hardcoded to `--navy-950` (a fixed dark navy that never changes), so they were invisible against dark backgrounds. They now use the theme-aware `--ink-900` token; `--navy-950` is reserved for intentionally-always-dark surfaces (sidebar in dark mode, primary buttons, toasts).
-- **Fixed the mobile topbar overlap**: the topbar had a fixed height, so a wrapping greeting (long name + emoji) would overflow and overlap the content below. It's now auto-height, the profile name/role text collapses to just the avatar on mobile, and the greeting/icons shrink slightly on small screens.
-- Added a thin custom sidebar scrollbar (native scrollbar was bulky), a left accent bar on the active sidebar link, and body-scroll-lock while the mobile drawer is open.
+## How it works
 
-## What's working now
+- **Frontend:** plain HTML, CSS and JavaScript (no build step).
+- **Database, login and photo storage:** Supabase (Postgres, Auth, Storage).
+- **Sign in:** email + password, or Google. Roles come from the database. Administrators are
+  invited by email and cannot be self-registered.
+- **Security:** Row Level Security in the database. A cell leader only receives their own cell's
+  data; a group administrator only their group's; a zonal administrator everything. The 30-minute
+  report edit window and the 3-photos-per-activity limit are also enforced there.
+- **No ministry data in the browser.** The browser only keeps the Supabase sign-in token and two
+  display preferences (light/dark theme, sidebar collapsed).
 
-- **Landing page** (`index.html`) — nav, hero, features, how-it-works flow, real Group/Chapter counts, CTA, footer. Dark mode toggle. No animated hero visual yet — waiting on what you send next.
-- **Login** (`login.html`) — simplified centered card, role selector (Cell Leader / Administrator), show/hide password, loading + success state, inline validation, forgot-password modal (honest "not connected yet" message, no fake reset), "Continue with Google" button (shows an honest message — no fake success; wire up a real OAuth provider later), link to registration.
-- **Registration** (`register.html`) — Cell Leader signups pick a real Group → Chapter (cascading selects) and name their cell; Administrator signups skip those fields. Validates required fields, email format, password match/length, and duplicate email. **A Cell Leader registration actually creates a real cell + leader record**, so the new account's dashboard is immediately populated instead of empty.
-- **Cell Leader Dashboard** (`leader-dashboard.html`) — dynamic greeting with rotating tips, profile dropdown (avatar/name/role → Profile, Account Settings, Help, Sign Out), 5 summary cards, attendance trend chart, recent activities, quick actions. Shows a clean empty state if no cell is linked yet.
-- **Cell Leader portal, fully working** — My Cell, Members, Attendance, Offerings, Growth, Activities, Reports, Notifications and Settings are all real, functional pages (see the changelog entry above for details on each).
-- **Administrator Dashboard** (`admin-dashboard.html`) — greeting + rotating tip, profile dropdown, ministry-wide stats (cells, leaders, members, average attendance, total offering, groups, chapters, reports submitted), cells-by-chapter bar chart, cell-status donut, "cells needing attention" table — all with graceful empty states since no cells exist yet.
-- **Admin → Groups** (`admin-groups.html`) — the 5 real groups as cards with live stats, linking into:
-- **Admin → Group detail** (`admin-group-detail.html?group=<id>`) — real chapters for that group with per-chapter cell/member counts.
-- **Dark mode** — a real dark navy palette (not an inversion), no flash on load (theme is applied by an inline script in `<head>` before paint, reads `localStorage` then falls back to `prefers-color-scheme`), toggle button on every page, persists across pages.
-- **Authentication** (`auth.js`) — `login()`, `logout()`, `getCurrentUser()`, `requireAuth()`, `requireRole()`, `isAdmin()`, `isCellLeader()`, `redirectByRole()`, a `PERMISSIONS` map per role, and `hasPermission()`. Session is stored via `localStorage` (Remember me) or `sessionStorage` (not checked), never both. All of it is clearly commented as frontend-only.
+## Files
 
-## Real ministry data
+| File | Purpose |
+| --- | --- |
+| `supabase/schema.sql` | Tables, security rules, storage buckets, seed groups and chapters |
+| `supabase-config.js` | Your Supabase URL and anon key (you fill these in) |
+| `auth.js` | Sign in/up/out, Google, password reset, page bootstrap (`bootPage`) |
+| `data.js` | Loads data from Supabase into memory; reads are instant, writes are saved to the database |
+| `login.html`, `register.html`, `complete-profile.html`, `reset-password.html` | Account pages |
+| `leader-*.html` | Cell Leader portal: dashboard, My Cell, members, attendance, offerings, growth, activities, reports, notifications, settings |
+| `admin-*.html` | Administrator portal: dashboard, groups, chapters, cells, leaders, members, attendance, offerings, growth, activities, reports, analytics, notifications, settings |
+| `components.js`, `charts.js`, `utils.js`, `theme.js`, `app.js` | Shared UI code |
+| `style.css`, `components.css`, `responsive.css` | Styles |
 
-`data.js` now contains the actual supplied structure — nothing invented:
+## Feature notes
 
-- **NAU GROUP** → BLW NAU 1, BLW NAU 2, BLW SOPA, BLW CHS
-- **GRACE GROUP** → BLW ULI, BLW IGBARIAM, BLW LEGACY, BLW UMUNZE, BLW TANSIAN, BLW NOCEN, BLW MTI, BLW GRUNDTVIG
-- **SUPERNATURAL GROUP** → BLW UNEC, BLW ESUT, BLW PARKLANE, BLW ESECT, BLW DENTAL
-- **UNN GROUP** → BLW UNN 1, BLW UNN 2, BLW SUMAS, BLW MADUKA, BLW PACESETTERS CHURCH NSUKKA
-- **LUXURIANT GROUP** → BLW EBSU, BLW FUNAI, BLW DUFUS, BLW SITs
-
-Cells, leaders and members are **not yet supplied**, so those arrays start empty — every page shows a proper empty state instead of invented records. They fill in naturally as Cell Leaders register (which creates a real cell) or as future Admin "Add Cell" flows are built.
-
-## Branding
-
-`blw-logo.png` is the app logo — used small (not oversized) in the landing nav, login/register icon, and browser tab context. Dashboards intentionally keep it out of the way so the user's own data leads.
-
-## Still to build (next stages)
-
-The frontend is now feature-complete and polished. The only thing still queued is the "Complete Your Profile" onboarding step for Google sign-in, which is blocked on a real OAuth provider being connected — appropriate for the Supabase Auth stage next, not before.
-
-## Data architecture
-
-Everything reads and writes through named functions in `data.js` (`getGroups`, `getChapters`, `getGroupStats`, `addCell`, `addLeader`, `addMember`, `recordAttendance`, `submitReport`, etc.) — never through the underlying `demoData` object directly. To connect a real backend later, keep every function's name and signature the same and replace each body with an API/database call; no other file should need to change.
-
-## Security note
-
-Authentication is entirely client-side and **not secure** — it exists only to demonstrate the UI flow (this is called out directly in the `auth.js` comments). Real authentication, role-based permissions, validation, and database security rules must be implemented server-side before any real deployment.
+- **Attendance:** Wednesday, Sunday, Friday Prayer Meeting and Leaders Meeting (leaders only), by week.
+  Past days can be reopened and edited. First timers are submitted once per week.
+- **Reports:** can be corrected for 30 minutes after submitting, until an administrator reviews them.
+- **Activities:** up to 3 photos per activity, visible to the cell's administrators.
+- **Growth (leader and admin):** weekly trends for members, first timers, offerings and attendance rate.
+- **Profile:** name, phone and a profile picture can be edited. Email is the login and is read-only.

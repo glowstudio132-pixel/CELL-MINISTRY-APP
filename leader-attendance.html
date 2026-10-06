@@ -9,6 +9,7 @@
     var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.setAttribute("data-theme", theme);
   } catch (e) {}
+  try { if (localStorage.getItem("ceCampusSidebarCollapsed") === "1") document.documentElement.setAttribute("data-sidebar", "collapsed"); } catch (e) {}
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -89,31 +90,64 @@
       <div id="attendance-content">
         <div class="panel">
           <div class="panel-head" style="flex-wrap:wrap; gap:12px;">
-            <h3>Take Attendance</h3>
-            <div class="u-flex u-gap-12" style="flex-wrap:wrap;">
-              <input class="input" type="date" id="att-date" style="width:170px;" />
-              <button class="btn btn-secondary btn-sm" onclick="markAllPresent()">Mark All Present</button>
+            <h3>Weekly Attendance</h3>
+            <div class="u-flex u-center u-gap-12" style="flex-wrap:wrap;">
+              <button class="btn btn-secondary btn-sm" id="wk-prev" aria-label="Previous week">&lsaquo; Prev</button>
+              <strong id="wk-label" style="min-width:150px; text-align:center;"></strong>
+              <button class="btn btn-secondary btn-sm" id="wk-next" aria-label="Next week">Next &rsaquo;</button>
+              <button class="btn btn-secondary btn-sm" id="wk-today">This week</button>
             </div>
           </div>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead><tr><th>Member</th><th>Present</th><th>Absent</th><th>Excused</th></tr></thead>
-              <tbody id="attendance-body"></tbody>
-            </table>
+          <div id="slot-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px;"></div>
+        </div>
+
+        <div class="panel" id="roster-panel">
+          <div class="panel-head" style="flex-wrap:wrap; gap:12px;">
+            <div><h3 id="roster-title"></h3><div id="roster-sub" style="font-size:12.5px; color:var(--ink-500); margin-top:2px;"></div></div>
+            <div class="u-flex u-gap-12" style="flex-wrap:wrap; align-items:center;">
+              <span id="leaders-date-wrap" style="display:none;"><input class="input" type="date" id="leaders-date" style="width:160px;" /></span>
+              <button class="btn btn-secondary btn-sm" id="mark-all-btn">Mark All Present</button>
+            </div>
           </div>
-          <div class="u-flex u-gap-16" style="margin-top:16px; flex-wrap:wrap;">
-            <div class="field" style="flex:1; min-width:140px; margin-bottom:0;"><label>Visitors</label><input class="input" type="number" min="0" id="att-visitors" value="0" /></div>
-            <div class="field" style="flex:1; min-width:140px; margin-bottom:0;"><label>First Timers</label><input class="input" type="number" min="0" id="att-firsttimers" value="0" /></div>
+          <div id="roster-message"></div>
+          <div id="roster-body">
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead><tr><th>Member</th><th>Present</th><th>Absent</th><th>Excused</th></tr></thead>
+                <tbody id="attendance-body"></tbody>
+              </table>
+            </div>
+            <div class="field" style="max-width:220px; margin:16px 0 0;"><label>Visitors</label><input class="input" type="number" min="0" id="att-visitors" value="0" /></div>
+            <button class="btn btn-primary" style="margin-top:16px;" id="save-att-btn"><i data-lucide="check"></i> <span id="save-att-label">Save Attendance</span></button>
           </div>
-          <button class="btn btn-primary" style="margin-top:16px;" onclick="saveAttendance()"><i data-lucide="check"></i> Save Attendance</button>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>First Timers This Week</h3><span id="ft-status"></span></div>
+          <p style="font-size:13px; color:var(--ink-500); margin-bottom:12px;">Total number of first timers your cell received during <strong id="ft-week-label"></strong>.</p>
+          <div class="u-flex u-gap-16" style="flex-wrap:wrap; align-items:flex-end;">
+            <div class="field" style="flex:1; min-width:140px; max-width:200px; margin-bottom:0;"><label>First Timers</label><input class="input" type="number" min="0" id="ft-count" value="0" /></div>
+            <div class="field" style="flex:2; min-width:200px; margin-bottom:0;"><label>Note (optional)</label><input class="input" id="ft-note" maxlength="120" placeholder="e.g. Invited from the hostel outreach" /></div>
+            <button class="btn btn-primary" id="ft-save-btn">Save First Timers</button>
+          </div>
         </div>
 
         <div class="panel">
           <div class="panel-head"><h3>Attendance History</h3></div>
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>Date</th><th>Present</th><th>Absent</th><th>Excused</th><th>Visitors</th><th>First Timers</th><th>Rate</th></tr></thead>
+              <thead><tr><th>Date</th><th>Meeting</th><th>Present</th><th>Absent</th><th>Excused</th><th>Visitors</th><th>Rate</th><th></th></tr></thead>
               <tbody id="history-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>First Timers History</h3></div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Week</th><th>First Timers</th><th>Note</th><th></th></tr></thead>
+              <tbody id="ft-history-body"></tbody>
             </table>
           </div>
         </div>
@@ -132,6 +166,8 @@
   </div>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="utils.js"></script>
 <script src="theme.js"></script>
 <script src="auth.js"></script>
@@ -139,11 +175,13 @@
 <script src="components.js"></script>
 
 <script>
-  const session = requireRole("cell_leader");
-  const cellId = session ? (session.cellId || null) : null;
+  let session = null;
+  let cellId = null;
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    session = await bootPage("cell_leader");
     if (!session) return;
+    cellId = session.cellId || null;
     initProfileMenu("profile-menu-slot", session);
 
     function goLogout() { confirmAction("Are you sure you want to end your current session?", logout, { title: "Sign out?", confirmLabel: "Sign Out" }); }
@@ -157,71 +195,176 @@
 
     if (cellId) {
       document.getElementById("attendance-content").style.display = "";
-      document.getElementById("att-date").value = new Date().toISOString().slice(0, 10);
+      const $ = id => document.getElementById(id);
+      const today = localISODate();
+      const currentWeek = getWeekStart(today);
+      let weekStart = currentWeek;
+      let activeSession = "sunday";
+      let leadersDate = null;
+      let roster = [];
 
-      const members = getMembers(cellId).filter(m => m.status === "Active");
-      const attBody = document.getElementById("attendance-body");
-      if (members.length) {
-        attBody.innerHTML = members.map(m => `
-          <tr>
-            <td style="font-weight:600; color:var(--ink-900);">${m.name}</td>
-            <td><input type="radio" name="att-${m.id}" value="present" checked /></td>
-            <td><input type="radio" name="att-${m.id}" value="absent" /></td>
-            <td><input type="radio" name="att-${m.id}" value="excused" /></td>
-          </tr>
-        `).join("");
-      } else {
-        attBody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><h4>No active members yet</h4><p>Add members before taking attendance.</p><a href="leader-members.html" class="btn btn-primary btn-sm" style="margin-top:14px;">Go to Members</a></div></td></tr>`;
+      const weekEnd = () => addDaysISO(weekStart, 6);
+      const sessionDef = id => ATTENDANCE_SESSIONS.find(x => x.id === id);
+      function leadersRecordInWeek() { return getAttendanceForWeek(cellId, weekStart).find(a => a.session === "leaders") || null; }
+      function sessionDate(id) { return id === "leaders" ? leadersDate : getSessionDate(weekStart, id); }
+      function recordFor(id) { const d = sessionDate(id); return d ? getAttendanceRecord(cellId, d, id) : null; }
+      function defaultLeadersDate() {
+        const rec = leadersRecordInWeek();
+        if (rec) return rec.date;
+        return today >= weekStart && today <= weekEnd() ? today : weekEnd();
+      }
+      function joinedBy(m, date) { const j = memberJoinedISO(m); return !j || j <= date; }
+      function rangeLabel() {
+        return formatDate(weekStart, { day: "numeric", month: "short" }) + " – " + formatDate(weekEnd(), { day: "numeric", month: "short", year: "numeric" });
       }
 
-      window.markAllPresent = function () {
-        members.forEach(m => {
-          const radio = document.querySelector(`input[name="att-${m.id}"][value="present"]`);
-          if (radio) radio.checked = true;
-        });
-        showToast("All members marked present.", "success");
-      };
+      function renderSlots() {
+        $("wk-label").textContent = rangeLabel() + (weekStart === currentWeek ? " (this week)" : "");
+        $("wk-next").disabled = weekStart >= currentWeek;
+        $("slot-grid").innerHTML = ATTENDANCE_SESSIONS.map(def => {
+          const rec = def.id === "leaders" ? leadersRecordInWeek() : recordFor(def.id);
+          const d = def.id === "leaders" ? (rec ? rec.date : null) : sessionDate(def.id);
+          const upcoming = d ? d > today : (weekStart > today);
+          const sel = activeSession === def.id;
+          const badge = rec ? `<span class="badge badge-active">Submitted</span>` : upcoming ? `<span class="badge badge-pending">Upcoming</span>` : `<span class="badge badge-pending">Pending</span>`;
+          const when = def.id === "leaders" ? (rec ? formatDate(rec.date, { weekday: "short", day: "numeric", month: "short" }) : "Pick a date") : formatDate(d, { weekday: "short", day: "numeric", month: "short" });
+          return `<button type="button" data-slot="${def.id}" ${upcoming && !rec && def.id !== "leaders" ? "disabled" : ""}
+            style="text-align:left; padding:14px; border-radius:12px; background:var(--paper-0); font-family:inherit; cursor:pointer; border:1.5px solid ${sel ? "var(--royal-600, #3346d6)" : "var(--line-200, #e3e6f2)"}; ${upcoming && !rec && def.id !== "leaders" ? "opacity:.55; cursor:not-allowed;" : ""}">
+            <div style="font-weight:700; color:var(--ink-900); margin-bottom:2px;">${def.label}</div>
+            <div style="font-size:12.5px; color:var(--ink-500); margin-bottom:8px;">${when}</div>${badge}</button>`;
+        }).join("");
+        document.querySelectorAll("#slot-grid [data-slot]").forEach(btn => btn.addEventListener("click", () => {
+          activeSession = btn.dataset.slot;
+          if (activeSession === "leaders") leadersDate = defaultLeadersDate();
+          renderAll();
+        }));
+      }
 
-      function renderHistory() {
-        const history = getAttendance(cellId);
-        const body = document.getElementById("history-body");
-        if (!history.length) {
-          body.innerHTML = `<tr><td colspan="7"><div class="empty-state">No attendance recorded yet.</div></td></tr>`;
+      function renderRoster() {
+        const def = sessionDef(activeSession);
+        const date = sessionDate(activeSession);
+        const isLeaders = activeSession === "leaders";
+        $("leaders-date-wrap").style.display = isLeaders ? "" : "none";
+        if (isLeaders) {
+          const ld = $("leaders-date");
+          ld.min = weekStart; ld.max = weekEnd() < today ? weekEnd() : today; ld.value = leadersDate;
+        }
+        $("roster-title").textContent = def.label;
+        const rec = date ? getAttendanceRecord(cellId, date, activeSession) : null;
+        $("roster-sub").textContent = date ? formatDate(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) + (rec ? " · Submitted, you can edit it" : "") : "";
+        $("save-att-label").textContent = rec ? "Update Attendance" : "Save Attendance";
+
+        const msg = $("roster-message"), body = $("roster-body"), markBtn = $("mark-all-btn");
+        const hideAll = text => { msg.innerHTML = `<div class="empty-state"><h4>${text}</h4></div>`; body.style.display = "none"; markBtn.style.display = "none"; };
+        body.style.display = ""; markBtn.style.display = ""; msg.innerHTML = "";
+
+        if (!date || (date > today && !rec)) { hideAll("This meeting hasn't happened yet"); return; }
+
+        const all = getMembers(cellId);
+        const marks = rec && rec.marks ? rec.marks : {};
+        roster = all.filter(m => (isLeaders ? m.isLeader : true) && ((m.status === "Active" && joinedBy(m, date)) || marks[m.id]));
+        if (!roster.length) {
+          if (isLeaders) { hideAll("No leaders in this cell yet"); msg.innerHTML += `<p style="text-align:center; font-size:13px; color:var(--ink-500);">Mark members as leaders on the Members page and they will appear here.</p>`; }
+          else { hideAll("No active members yet"); msg.innerHTML += `<div style="text-align:center;"><a href="leader-members.html" class="btn btn-primary btn-sm">Go to Members</a></div>`; }
           return;
         }
-        body.innerHTML = history.map(a => `
-          <tr>
-            <td style="font-weight:600; color:var(--ink-900);">${formatDate(a.date)}</td>
-            <td>${a.present}</td>
-            <td>${a.absent}</td>
-            <td>${a.excused}</td>
-            <td>${a.visitors || 0}</td>
-            <td>${a.firstTimers || 0}</td>
-            <td>${a.total ? Math.round((a.present / a.total) * 100) : 0}%</td>
-          </tr>
-        `).join("");
+        $("attendance-body").innerHTML = roster.map(m => {
+          const v = marks[m.id] || "present";
+          const r = val => `<td><input type="radio" name="att-${m.id}" value="${val}" ${v === val ? "checked" : ""} /></td>`;
+          return `<tr><td style="font-weight:600; color:var(--ink-900);">${escapeHtml(m.name)}</td>${r("present")}${r("absent")}${r("excused")}</tr>`;
+        }).join("");
+        $("att-visitors").value = rec ? (rec.visitors || 0) : 0;
       }
 
-      window.saveAttendance = function () {
-        let present = 0, absent = 0, excused = 0;
-        members.forEach(m => {
-          const checked = document.querySelector(`input[name="att-${m.id}"]:checked`);
-          const val = checked ? checked.value : "present";
-          if (val === "present") present++;
-          else if (val === "absent") absent++;
-          else excused++;
-        });
-        const visitors = parseInt(document.getElementById("att-visitors").value, 10) || 0;
-        const firstTimers = parseInt(document.getElementById("att-firsttimers").value, 10) || 0;
-        recordAttendance({
-          cellId, date: document.getElementById("att-date").value || new Date().toISOString().slice(0, 10),
-          present, absent, excused, visitors, firstTimers, total: members.length
-        });
-        showToast("Attendance saved successfully.", "success");
-        renderHistory();
-      };
+      function renderFirstTimers() {
+        $("ft-week-label").textContent = rangeLabel();
+        const rec = getFirstTimersForWeek(cellId, weekStart);
+        $("ft-count").value = rec ? rec.count : 0;
+        $("ft-note").value = rec ? (rec.note || "") : "";
+        $("ft-status").innerHTML = rec ? `<span class="badge badge-active">Submitted</span>` : `<span class="badge badge-pending">Not submitted</span>`;
+      }
 
-      renderHistory();
+      function sessionLabel(a) { const d = sessionDef(a.session); return d ? d.label : "General"; }
+      function renderHistory() {
+        const history = getAttendance(cellId);
+        $("history-body").innerHTML = history.length ? history.map(a => `
+          <tr>
+            <td style="font-weight:600; color:var(--ink-900);">${formatDate(a.date)}</td>
+            <td>${sessionLabel(a)}</td>
+            <td>${a.present}</td><td>${a.absent}</td><td>${a.excused}</td>
+            <td>${a.visitors || 0}</td>
+            <td>${a.total ? Math.round((a.present / a.total) * 100) : 0}%</td>
+            <td>${sessionDef(a.session) ? `<button class="btn btn-secondary btn-sm" data-open="${a.id}">View / Edit</button>` : ""}</td>
+          </tr>`).join("") : `<tr><td colspan="8"><div class="empty-state">No attendance recorded yet.</div></td></tr>`;
+        document.querySelectorAll("#history-body [data-open]").forEach(btn => btn.addEventListener("click", () => {
+          const a = history.find(x => x.id === btn.dataset.open);
+          weekStart = getWeekStart(a.date);
+          activeSession = a.session;
+          leadersDate = a.session === "leaders" ? a.date : defaultLeadersDate();
+          renderAll();
+          $("roster-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+        }));
+
+        const fts = getFirstTimers(cellId);
+        $("ft-history-body").innerHTML = fts.length ? fts.map(f => `
+          <tr>
+            <td style="font-weight:600; color:var(--ink-900);">${formatDate(f.weekStart, { day: "numeric", month: "short" })} – ${formatDate(addDaysISO(f.weekStart, 6))}</td>
+            <td>${f.count}</td><td>${escapeHtml(f.note || "—")}</td>
+            <td><button class="btn btn-secondary btn-sm" data-ft-week="${f.weekStart}">View / Edit</button></td>
+          </tr>`).join("") : `<tr><td colspan="4"><div class="empty-state">No first timers submitted yet.</div></td></tr>`;
+        document.querySelectorAll("#ft-history-body [data-ft-week]").forEach(btn => btn.addEventListener("click", () => {
+          weekStart = btn.dataset.ftWeek;
+          leadersDate = defaultLeadersDate();
+          renderAll();
+          $("ft-save-btn").scrollIntoView({ behavior: "smooth", block: "center" });
+        }));
+      }
+
+      function renderAll() { renderSlots(); renderRoster(); renderFirstTimers(); renderHistory(); lucide.createIcons(); }
+
+      $("wk-prev").addEventListener("click", () => { weekStart = addDaysISO(weekStart, -7); leadersDate = defaultLeadersDate(); renderAll(); });
+      $("wk-next").addEventListener("click", () => { if (weekStart < currentWeek) { weekStart = addDaysISO(weekStart, 7); leadersDate = defaultLeadersDate(); renderAll(); } });
+      $("wk-today").addEventListener("click", () => { weekStart = currentWeek; leadersDate = defaultLeadersDate(); renderAll(); });
+      $("leaders-date").addEventListener("change", e => {
+        const v = e.target.value;
+        if (!v || v < weekStart || v > weekEnd() || v > today) { e.target.value = leadersDate; showToast("Pick a date within this week that has already passed.", "error"); return; }
+        leadersDate = v; renderAll();
+      });
+      $("mark-all-btn").addEventListener("click", () => {
+        roster.forEach(m => { const r = document.querySelector(`input[name="att-${m.id}"][value="present"]`); if (r) r.checked = true; });
+        showToast("All marked present.", "success");
+      });
+      $("save-att-btn").addEventListener("click", async () => {
+        const date = sessionDate(activeSession);
+        if (!date || date > today || !roster.length) return;
+        const marks = {}; let present = 0, absent = 0, excused = 0;
+        roster.forEach(m => {
+          const c = document.querySelector(`input[name="att-${m.id}"]:checked`);
+          const v = c ? c.value : "present";
+          marks[m.id] = v;
+          if (v === "present") present++; else if (v === "absent") absent++; else excused++;
+        });
+        const existed = !!getAttendanceRecord(cellId, date, activeSession);
+        try {
+          await saveAttendanceRecord({
+            cellId, date, session: activeSession, present, absent, excused, marks,
+            visitors: Math.max(0, parseInt($("att-visitors").value, 10) || 0),
+            total: roster.length
+          });
+        } catch (err) { showToast(err.message, "error"); return; }
+        showToast(existed ? "Attendance updated." : "Attendance saved.", "success");
+        renderAll();
+      });
+      $("ft-save-btn").addEventListener("click", async () => {
+        const n = parseInt($("ft-count").value, 10);
+        if (isNaN(n) || n < 0) { showToast("Enter a valid number of first timers.", "error"); return; }
+        try { await saveFirstTimers({ cellId, weekStart, count: n, note: $("ft-note").value.trim() }); }
+        catch (err) { showToast(err.message, "error"); return; }
+        showToast("First timers saved.", "success");
+        renderAll();
+      });
+
+      renderAll();
     } else {
       document.getElementById("attendance-content").style.display = "none";
     }

@@ -9,6 +9,7 @@
     var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.setAttribute("data-theme", theme);
   } catch (e) {}
+  try { if (localStorage.getItem("ceCampusSidebarCollapsed") === "1") document.documentElement.setAttribute("data-sidebar", "collapsed"); } catch (e) {}
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -91,6 +92,21 @@
           <div style="height:260px;" id="strength-chart-wrap"><canvas id="strength-bar"></canvas></div>
         </div>
       </div>
+
+        <div class="panel" style="margin-top:0;">
+          <div class="panel-head" style="flex-wrap:wrap; gap:12px;">
+            <h3>Weekly trends</h3>
+            <select class="select" id="trend-weeks" style="width:150px;">
+              <option value="4">Last 4 weeks</option><option value="8" selected>Last 8 weeks</option><option value="12">Last 12 weeks</option>
+            </select>
+          </div>
+          <div class="panel-grid-2">
+            <div><div class="summary-label" style="margin-bottom:8px;">Members</div><div style="height:220px;"><canvas id="tr-members"></canvas></div></div>
+            <div><div class="summary-label" style="margin-bottom:8px;">First timers</div><div style="height:220px;"><canvas id="tr-firsttimers"></canvas></div></div>
+            <div><div class="summary-label" style="margin-bottom:8px;">Offerings</div><div style="height:220px;"><canvas id="tr-offerings"></canvas></div></div>
+            <div><div class="summary-label" style="margin-bottom:8px;">Attendance rate</div><div style="height:220px;"><canvas id="tr-rate"></canvas></div></div>
+          </div>
+        </div>
     </div>
   </main>
 </div>
@@ -105,6 +121,8 @@
   </div>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="utils.js"></script>
 <script src="theme.js"></script>
 <script src="auth.js"></script>
@@ -113,9 +131,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="charts.js"></script>
 <script>
-  const session = requireRole("administrator");
+  let session = null;
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    session = await bootPage("administrator");
     if (!session) return;
     initProfileMenu("profile-menu-slot", session);
 
@@ -170,6 +189,12 @@
     } else {
       document.getElementById("strength-chart-wrap").innerHTML = `<div class="empty-state"><h4>No cells yet</h4></div>`;
     }
+
+
+      const trendIds = { members: "tr-members", firstTimers: "tr-firsttimers", offerings: "tr-offerings", rate: "tr-rate" };
+      const drawTrends = () => renderGrowthTrends(getWeeklySeries(scopeCellIds, parseInt(document.getElementById("trend-weeks").value, 10)), trendIds);
+      document.getElementById("trend-weeks").addEventListener("change", drawTrends);
+      drawTrends();
 
     lucide.createIcons();
   });

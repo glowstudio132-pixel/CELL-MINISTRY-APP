@@ -58,6 +58,31 @@ document.addEventListener("DOMContentLoaded", markActiveNav);
    Renders into any container. Wires Sign Out to the shared
    logout confirmation; Profile/Account Settings/Help are
    placeholders until those pages exist. */
+/* Full-size photo viewer (click anywhere or press Esc to close). */
+function openPhotoViewer(src, caption) {
+  if (typeof src !== "string" || src.indexOf("data:image/") !== 0) return;
+  const old = document.getElementById("photo-viewer"); if (old) old.remove();
+  const el = document.createElement("div");
+  el.id = "photo-viewer";
+  el.style.cssText = "position:fixed; inset:0; background:rgba(10,12,30,.86); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; cursor:zoom-out;";
+  el.innerHTML = `<img src="${src}" alt="" style="max-width:100%; max-height:82vh; border-radius:10px;" />` +
+    (caption ? `<div style="color:#fff; margin-top:12px; font-size:13.5px; text-align:center;">${escapeHtml(caption)}</div>` : "");
+  const close = () => { el.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  el.addEventListener("click", close);
+  document.addEventListener("keydown", onKey);
+  document.body.appendChild(el);
+}
+
+/* Avatar: the user's photo if they have one, otherwise their initials. */
+function avatarHTML(user, px, fontPx) {
+  const base = `width:${px}px; height:${px}px; font-size:${fontPx}px;`;
+  if (user && typeof user.photo === "string" && user.photo.indexOf("data:image/") === 0) {
+    return `<span class="side-avatar" style="${base} overflow:hidden; padding:0;"><img src="${user.photo}" alt="" style="width:100%; height:100%; object-fit:cover; display:block;" /></span>`;
+  }
+  return `<span class="side-avatar" style="${base}">${escapeHtml(initials(user ? user.name : ""))}</span>`;
+}
+
 function initProfileMenu(containerId, user) {
   const container = document.getElementById(containerId);
   if (!container || !user) return;
@@ -66,9 +91,9 @@ function initProfileMenu(containerId, user) {
   container.innerHTML = `
     <div class="profile-menu">
       <button class="profile-trigger" id="profile-trigger" aria-haspopup="true" aria-expanded="false">
-        <span class="side-avatar" style="width:36px; height:36px; font-size:13px;">${initials(user.name)}</span>
+        ${avatarHTML(user, 36, 13)}
         <span class="profile-trigger-text">
-          <span class="u-name" style="color:var(--ink-900); display:block;">${user.name}</span>
+          <span class="u-name" style="color:var(--ink-900); display:block;">${escapeHtml(user.name)}</span>
           <span class="u-role" style="color:var(--ink-500);">${roleLabel}</span>
         </span>
         <i data-lucide="chevron-down" class="profile-chevron" style="width:16px; height:16px; color:var(--ink-400);"></i>
@@ -128,6 +153,7 @@ function initSidebarCollapse() {
   let collapsed = false;
   try { collapsed = localStorage.getItem(SIDEBAR_COLLAPSE_KEY) === "1"; } catch (e) {}
   if (collapsed) sidebar.classList.add("collapsed");
+  document.documentElement.removeAttribute("data-sidebar"); // the early attribute has done its job
 
   btn.addEventListener("click", () => {
     const isCollapsed = sidebar.classList.toggle("collapsed");

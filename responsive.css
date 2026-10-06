@@ -79,17 +79,28 @@
 .sidebar-collapse-btn svg { width: 15px; height: 15px; transition: transform 0.2s ease; }
 @media (min-width: 901px) {
   .sidebar-collapse-btn { display: flex; }
-  .sidebar.collapsed { width: 84px; }
+  .sidebar.collapsed,
+  html[data-sidebar="collapsed"] .sidebar { width: 84px; }
   .sidebar.collapsed .brand-text,
+  html[data-sidebar="collapsed"] .sidebar .brand-text,
   .sidebar.collapsed .side-label,
+  html[data-sidebar="collapsed"] .sidebar .side-label,
   .sidebar.collapsed .link-text,
+  html[data-sidebar="collapsed"] .sidebar .link-text,
   .sidebar.collapsed .side-user-text,
-  .sidebar.collapsed .count { display: none; }
-  .sidebar.collapsed .sidebar-brand-row { flex-direction: column; align-items: center; gap: 10px; padding: 0 0 16px; }
-  .sidebar.collapsed .side-link { justify-content: center; padding: 11px; }
-  .sidebar.collapsed .side-user { justify-content: center; padding: 8px 0; }
-  .sidebar.collapsed .side-foot .side-link { justify-content: center; }
-  .sidebar.collapsed .sidebar-collapse-btn svg { transform: rotate(180deg); }
+  html[data-sidebar="collapsed"] .sidebar .side-user-text,
+  .sidebar.collapsed .count,
+  html[data-sidebar="collapsed"] .sidebar .count { display: none; }
+  .sidebar.collapsed .sidebar-brand-row,
+  html[data-sidebar="collapsed"] .sidebar .sidebar-brand-row { flex-direction: column; align-items: center; gap: 10px; padding: 0 0 16px; }
+  .sidebar.collapsed .side-link,
+  html[data-sidebar="collapsed"] .sidebar .side-link { justify-content: center; padding: 11px; }
+  .sidebar.collapsed .side-user,
+  html[data-sidebar="collapsed"] .sidebar .side-user { justify-content: center; padding: 8px 0; }
+  .sidebar.collapsed .side-foot .side-link,
+  html[data-sidebar="collapsed"] .sidebar .side-foot .side-link { justify-content: center; }
+  .sidebar.collapsed .sidebar-collapse-btn svg,
+  html[data-sidebar="collapsed"] .sidebar .sidebar-collapse-btn svg { transform: rotate(180deg); }
 }
 
 /* ---------- Main / Topbar ---------- */
@@ -541,3 +552,7 @@ body:has(.sidebar.open) .menu-toggle span:nth-child(2) { transform: translate(-5
     font-size: 16px !important;
   }
 }
+
+/* While a page loads its data, keep the sidebar visible and hold back only the page area. */
+.main.booting > *:not(#boot-loader) { visibility: hidden; }
+.main.booting > #boot-loader { padding: 80px 24px; text-align: center; color: var(--ink-500); font-size: 14px; }

@@ -9,6 +9,7 @@
     var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.setAttribute("data-theme", theme);
   } catch (e) {}
+  try { if (localStorage.getItem("ceCampusSidebarCollapsed") === "1") document.documentElement.setAttribute("data-sidebar", "collapsed"); } catch (e) {}
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -107,9 +108,30 @@
           <div class="panel-head"><h3>Report History</h3></div>
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>Week Of</th><th>Attendance</th><th>Offering</th><th>New Members</th><th>Status</th></tr></thead>
+              <thead><tr><th>Week Of</th><th>Attendance</th><th>Offering</th><th>New Members</th><th>Status</th><th></th></tr></thead>
               <tbody id="reports-body"></tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-overlay hidden" id="edit-report-modal">
+        <div class="modal">
+          <div class="modal-header"><h3 style="font-size:16px;">Edit Report</h3><button class="modal-close" onclick="closeModal('edit-report-modal')">&times;</button></div>
+          <div class="modal-body">
+            <p id="er-timer" style="font-size:12.5px; color:var(--ink-500); margin-bottom:12px;"></p>
+            <form id="edit-report-form">
+              <div class="grid-2">
+                <div class="field"><label>Week Of</label><input class="input" type="date" id="er-week" required /></div>
+                <div class="field"><label>Attendance</label><input class="input" type="number" min="0" id="er-attendance" /></div>
+                <div class="field"><label>Offering (₦)</label><input class="input" type="number" min="0" id="er-offering" /></div>
+                <div class="field"><label>New Members</label><input class="input" type="number" min="0" id="er-newmembers" /></div>
+                <div class="field"><label>Visitors</label><input class="input" type="number" min="0" id="er-visitors" /></div>
+                <div class="field"><label>Activities</label><input class="input" type="number" min="0" id="er-activities" /></div>
+              </div>
+              <div class="field"><label>Challenges / Notes</label><textarea class="input" id="er-notes" rows="3"></textarea></div>
+              <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
+            </form>
           </div>
         </div>
       </div>
@@ -127,6 +149,8 @@
   </div>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="utils.js"></script>
 <script src="theme.js"></script>
 <script src="auth.js"></script>
@@ -134,11 +158,13 @@
 <script src="components.js"></script>
 
 <script>
-  const session = requireRole("cell_leader");
-  const cellId = session ? (session.cellId || null) : null;
+  let session = null;
+  let cellId = null;
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    session = await bootPage("cell_leader");
     if (!session) return;
+    cellId = session.cellId || null;
     initProfileMenu("profile-menu-slot", session);
 
     function goLogout() { confirmAction("Are you sure you want to end your current session?", logout, { title: "Sign out?", confirmLabel: "Sign Out" }); }
@@ -152,26 +178,71 @@
 
     if (cellId) {
       document.getElementById("reports-content").style.display = "";
-      document.getElementById("r-week").value = new Date().toISOString().slice(0, 10);
+      document.getElementById("r-week").value = localISODate();
 
+      let editingId = null;
       function renderReports() {
         const list = getReports(cellId);
         const body = document.getElementById("reports-body");
-        if (!list.length) { body.innerHTML = `<tr><td colspan="5"><div class="empty-state">No reports submitted yet.</div></td></tr>`; return; }
-        body.innerHTML = list.map(r => `
+        if (!list.length) { body.innerHTML = `<tr><td colspan="6"><div class="empty-state">No reports submitted yet.</div></td></tr>`; return; }
+        body.innerHTML = list.map(r => {
+          const left = getReportEditMinutesLeft(r);
+          const action = left > 0
+            ? `<button class="btn btn-secondary btn-sm" data-edit="${r.id}"><i data-lucide="pencil"></i> Edit · ${left} min left</button>`
+            : `<span style="font-size:12px; color:var(--ink-500);">Locked</span>`;
+          return `
           <tr>
-            <td style="font-weight:600; color:var(--ink-900);">${formatDate(r.weekOf)}</td>
+            <td style="font-weight:600; color:var(--ink-900);">${formatDate(r.weekOf)}${r.editedAt ? ` <span style="font-size:11.5px; color:var(--ink-500); font-weight:400;">(edited)</span>` : ""}</td>
             <td>${r.attendance}</td>
             <td>${formatNaira(r.offering)}</td>
             <td>${r.newMembers}</td>
             <td><span class="badge ${statusBadgeClass(r.status)}">${r.status}</span></td>
-          </tr>
-        `).join("");
+            <td>${action}</td>
+          </tr>`;
+        }).join("");
+        body.querySelectorAll("[data-edit]").forEach(btn => btn.addEventListener("click", () => openEdit(btn.dataset.edit)));
+        lucide.createIcons();
       }
 
-      document.getElementById("report-form").addEventListener("submit", (e) => {
+      function openEdit(id) {
+        const r = getReports(cellId).find(x => x.id === id);
+        if (!r || !canEditReport(r)) { showToast("The edit window for this report has closed.", "error"); renderReports(); return; }
+        editingId = id;
+        document.getElementById("er-week").value = r.weekOf || "";
+        document.getElementById("er-attendance").value = r.attendance;
+        document.getElementById("er-offering").value = r.offering;
+        document.getElementById("er-newmembers").value = r.newMembers;
+        document.getElementById("er-visitors").value = r.visitors || 0;
+        document.getElementById("er-activities").value = r.activities || 0;
+        document.getElementById("er-notes").value = r.notes || "";
+        document.getElementById("er-timer").textContent = "You can correct this report for " + getReportEditMinutesLeft(r) + " more minute(s). After that it is locked.";
+        openModal("edit-report-modal");
+      }
+
+      document.getElementById("edit-report-form").addEventListener("submit", async (e) => {
         e.preventDefault();
-        submitReport({
+        let saved = null;
+        try { saved = await editReport(editingId, {
+          weekOf: document.getElementById("er-week").value,
+          attendance: parseInt(document.getElementById("er-attendance").value, 10) || 0,
+          offering: parseFloat(document.getElementById("er-offering").value) || 0,
+          newMembers: parseInt(document.getElementById("er-newmembers").value, 10) || 0,
+          visitors: parseInt(document.getElementById("er-visitors").value, 10) || 0,
+          activities: parseInt(document.getElementById("er-activities").value, 10) || 0,
+          notes: document.getElementById("er-notes").value.trim()
+        }); } catch (err) { closeModal("edit-report-modal"); showToast(err.message, "error"); return; }
+        closeModal("edit-report-modal");
+        if (saved) showToast("Report updated.", "success");
+        else showToast("The edit window closed before you saved, so nothing was changed.", "error");
+        renderReports();
+      });
+
+      // Keep the countdown honest and lock rows as their window ends
+      setInterval(renderReports, 30000);
+
+      document.getElementById("report-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try { await submitReport({
           cellId,
           weekOf: document.getElementById("r-week").value,
           attendance: parseInt(document.getElementById("r-attendance").value, 10) || 0,
@@ -180,10 +251,10 @@
           visitors: parseInt(document.getElementById("r-visitors").value, 10) || 0,
           activities: parseInt(document.getElementById("r-activities").value, 10) || 0,
           notes: document.getElementById("r-notes").value.trim()
-        });
+        }); } catch (err) { showToast(err.message, "error"); return; }
         showToast("Report submitted successfully.", "success");
         document.getElementById("report-form").reset();
-        document.getElementById("r-week").value = new Date().toISOString().slice(0, 10);
+        document.getElementById("r-week").value = localISODate();
         renderReports();
       });
 
