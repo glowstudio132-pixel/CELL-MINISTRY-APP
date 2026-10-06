@@ -109,8 +109,8 @@ async function signedAvatarUrl(path) {
   } catch (e) { return null; }
 }
 
-/* Builds the object every page uses as `session`. */
-async function buildSession(profile) {
+/* Builds the object every page uses as `session`. photoUrl: an already-signed avatar link (optional). */
+async function buildSession(profile, photoUrl) {
   const user = {
     id: profile.id,
     name: profile.full_name || profile.email,
@@ -118,7 +118,7 @@ async function buildSession(profile) {
     phone: profile.phone || "",
     role: profile.role,
     photoPath: profile.photo_path || null,
-    photo: await signedAvatarUrl(profile.photo_path),
+    photo: photoUrl !== undefined ? photoUrl : await signedAvatarUrl(profile.photo_path),
     emailReminders: profile.email_reminders !== false
   };
   if (profile.role === "administrator") {
@@ -159,15 +159,26 @@ function redirectByRole(user) {
 
 /* ---------- Page bootstrap ----------
    requiredRole: "cell_leader" | "administrator" | null (any signed-in user)
+   opts.needs: which data sets this page uses (see ALL_DATASETS in data.js). Asking only for
+               what the page shows is what makes page changes fast.
    opts.skipData: don't load cell data (help page, profile setup)
-   opts.allowNoCell: let a leader without a cell stay on this page */
+   opts.allowNoCell: let a leader without a cell stay on this page
+
+   Speed: the profile, the page's data and the profile picture link are all fetched at
+   the same time, so a page change costs about two network round-trips instead of five. */
 async function bootPage(requiredRole, opts) {
   opts = opts || {};
   showBootLoader();
+  if (window.lucide) lucide.createIcons();   // draw the sidebar icons right away
   try {
     const sb = getSupabase();
-    const { data: { session: authSession } } = await sb.auth.getSession();
+    const { data: { session: authSession } } = await sb.auth.getSession();   // read locally, no network
     if (!authSession) { window.location.replace("login.html"); return null; }
+
+    // Start loading the data immediately; it doesn't depend on the profile because the
+    // database only returns rows this person may see.
+    const dataPromise = opts.skipData ? Promise.resolve() : initData(opts.needs);
+    dataPromise.catch(() => {});   // handled below; avoids a stray warning if we redirect first
 
     let profile = await fetchProfile(sb, authSession.user.id);
     if (!profile) {
@@ -185,8 +196,8 @@ async function bootPage(requiredRole, opts) {
       return null;
     }
 
-    if (!opts.skipData) await initData(profile);
-    _user = await buildSession(profile);
+    const [, photoUrl] = await Promise.all([dataPromise, signedAvatarUrl(profile.photo_path)]);
+    _user = await buildSession(profile, photoUrl);
 
     sb.auth.onAuthStateChange((event) => { if (event === "SIGNED_OUT") window.location.replace("login.html"); });
     hideBootLoader();

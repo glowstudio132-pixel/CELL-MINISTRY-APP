@@ -179,7 +179,7 @@
   let cellId = null;
 
   document.addEventListener("DOMContentLoaded", async () => {
-    session = await bootPage("cell_leader");
+    session = await bootPage("cell_leader", { needs: ["attendance", "firstTimers", "members"] });
     if (!session) return;
     cellId = session.cellId || null;
     initProfileMenu("profile-menu-slot", session);

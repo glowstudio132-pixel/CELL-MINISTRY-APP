@@ -1,0 +1,10 @@
+{
+  "headers": [
+    {
+      "source": "/(.*)\\.(js|css|png|jpg|jpeg|svg|ico|webp)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=600, stale-while-revalidate=86400" }
+      ]
+    }
+  ]
+}

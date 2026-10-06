@@ -169,7 +169,7 @@
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
-    session = await bootPage("administrator");
+    session = await bootPage("administrator", { needs: ["attendance", "members", "offerings", "reports"] });
     if (!session) return;
 
     initProfileMenu("profile-menu-slot", session);

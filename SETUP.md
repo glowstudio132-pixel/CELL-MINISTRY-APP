@@ -25,6 +25,10 @@ This creates every table (cells, members, attendance, first timers, offerings,
 activities, activity photos, reports), the 5 groups and 26 chapters, the
 security rules (Row Level Security), and two private photo buckets.
 
+> **Already ran `schema.sql` before this update?** Also run `supabase/speed-patch.sql` once
+> (same place, same way). It makes the security rules fast on large tables. Fresh installs
+> don't need it, because `schema.sql` already includes it.
+
 ## 3. Connect the app to Supabase
 
 1. Open **Project Settings > API**.
@@ -125,6 +129,10 @@ where email = 'person@example.com';
 
 ## Notes for later
 
+- **Speed:** each page loads only the data it shows, and the groups/chapters are built into
+  `data.js` (they must match the seed in `schema.sql` if you ever change them). The included
+  `vercel.json` lets browsers keep scripts and images for 10 minutes, so changing pages doesn't
+  re-download them. After you upload a new version, hard-refresh (Ctrl+Shift+R) to see it at once.
 - Pages load everything the signed-in person is allowed to see when they open. This is fine for
   a zone of this size. If it ever feels slow for the zonal administrator, the next improvement is
   to load attendance and offerings by date range.

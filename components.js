@@ -59,13 +59,18 @@ document.addEventListener("DOMContentLoaded", markActiveNav);
    logout confirmation; Profile/Account Settings/Help are
    placeholders until those pages exist. */
 /* Full-size photo viewer (click anywhere or press Esc to close). */
+/* Photos are either freshly picked (data: URL) or signed links from Supabase Storage (https). */
+function isSafeImageSrc(src) {
+  return typeof src === "string" && (src.indexOf("data:image/") === 0 || src.indexOf("https://") === 0 || src.indexOf("blob:") === 0);
+}
+
 function openPhotoViewer(src, caption) {
-  if (typeof src !== "string" || src.indexOf("data:image/") !== 0) return;
+  if (!isSafeImageSrc(src)) return;
   const old = document.getElementById("photo-viewer"); if (old) old.remove();
   const el = document.createElement("div");
   el.id = "photo-viewer";
   el.style.cssText = "position:fixed; inset:0; background:rgba(10,12,30,.86); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; cursor:zoom-out;";
-  el.innerHTML = `<img src="${src}" alt="" style="max-width:100%; max-height:82vh; border-radius:10px;" />` +
+  el.innerHTML = `<img src="${escapeHtml(src)}" alt="" style="max-width:100%; max-height:82vh; border-radius:10px;" />` +
     (caption ? `<div style="color:#fff; margin-top:12px; font-size:13.5px; text-align:center;">${escapeHtml(caption)}</div>` : "");
   const close = () => { el.remove(); document.removeEventListener("keydown", onKey); };
   const onKey = (e) => { if (e.key === "Escape") close(); };
@@ -77,8 +82,8 @@ function openPhotoViewer(src, caption) {
 /* Avatar: the user's photo if they have one, otherwise their initials. */
 function avatarHTML(user, px, fontPx) {
   const base = `width:${px}px; height:${px}px; font-size:${fontPx}px;`;
-  if (user && typeof user.photo === "string" && user.photo.indexOf("data:image/") === 0) {
-    return `<span class="side-avatar" style="${base} overflow:hidden; padding:0;"><img src="${user.photo}" alt="" style="width:100%; height:100%; object-fit:cover; display:block;" /></span>`;
+  if (user && isSafeImageSrc(user.photo)) {
+    return `<span class="side-avatar" style="${base} overflow:hidden; padding:0;"><img src="${escapeHtml(user.photo)}" alt="" style="width:100%; height:100%; object-fit:cover; display:block;" /></span>`;
   }
   return `<span class="side-avatar" style="${base}">${escapeHtml(initials(user ? user.name : ""))}</span>`;
 }

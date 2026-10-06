@@ -39,9 +39,49 @@ const ACTIVITY_CATEGORIES = [
 const ACTIVITY_PHOTO_LIMIT = 3;
 const REPORT_EDIT_WINDOW_MINUTES = 30;
 
+/* ---------- Groups and chapters ----------
+   Fixed reference data, built in so pages don't have to fetch it. It must match
+   the groups/chapters seeded in supabase/schema.sql (edit both if one ever changes). */
+const REFERENCE_GROUPS = [
+  { id: "nau", name: "NAU GROUP" },
+  { id: "grace", name: "GRACE GROUP" },
+  { id: "supernatural", name: "SUPERNATURAL GROUP" },
+  { id: "unn", name: "UNN GROUP" },
+  { id: "luxuriant", name: "LUXURIANT GROUP" }
+];
+const REFERENCE_CHAPTERS = [
+  { id: "nau-1", groupId: "nau", name: "BLW NAU 1" },
+  { id: "nau-2", groupId: "nau", name: "BLW NAU 2" },
+  { id: "nau-sopa", groupId: "nau", name: "BLW SOPA" },
+  { id: "nau-chs", groupId: "nau", name: "BLW CHS" },
+  { id: "grace-uli", groupId: "grace", name: "BLW ULI" },
+  { id: "grace-igbariam", groupId: "grace", name: "BLW IGBARIAM" },
+  { id: "grace-legacy", groupId: "grace", name: "BLW LEGACY" },
+  { id: "grace-umunze", groupId: "grace", name: "BLW UMUNZE" },
+  { id: "grace-tansian", groupId: "grace", name: "BLW TANSIAN" },
+  { id: "grace-nocen", groupId: "grace", name: "BLW NOCEN" },
+  { id: "grace-mti", groupId: "grace", name: "BLW MTI" },
+  { id: "grace-grundtvig", groupId: "grace", name: "BLW GRUNDTVIG" },
+  { id: "sn-unec", groupId: "supernatural", name: "BLW UNEC" },
+  { id: "sn-esut", groupId: "supernatural", name: "BLW ESUT" },
+  { id: "sn-parklane", groupId: "supernatural", name: "BLW PARKLANE" },
+  { id: "sn-esect", groupId: "supernatural", name: "BLW ESECT" },
+  { id: "sn-dental", groupId: "supernatural", name: "BLW DENTAL" },
+  { id: "unn-1", groupId: "unn", name: "BLW UNN 1" },
+  { id: "unn-2", groupId: "unn", name: "BLW UNN 2" },
+  { id: "unn-sumas", groupId: "unn", name: "BLW SUMAS" },
+  { id: "unn-maduka", groupId: "unn", name: "BLW MADUKA" },
+  { id: "unn-pacesetters", groupId: "unn", name: "BLW PACESETTERS CHURCH NSUKKA" },
+  { id: "lux-ebsu", groupId: "luxuriant", name: "BLW EBSU" },
+  { id: "lux-funai", groupId: "luxuriant", name: "BLW FUNAI" },
+  { id: "lux-dufus", groupId: "luxuriant", name: "BLW DUFUS" },
+  { id: "lux-sits", groupId: "luxuriant", name: "BLW SITs" }
+];
+
 /* ---------- In-memory cache ---------- */
 function emptyData() {
-  return { groups: [], chapters: [], cells: [], leaders: [], members: [], attendance: [],
+  return { groups: REFERENCE_GROUPS.map(g => ({ ...g })), chapters: REFERENCE_CHAPTERS.map(c => ({ ...c })),
+           cells: [], leaders: [], members: [], attendance: [],
            firstTimers: [], offerings: [], activities: [], reports: [] };
 }
 let demoData = emptyData();
@@ -123,46 +163,64 @@ async function fetchAll(table, columns, orderCol, filterFn) {
   return rows;
 }
 
-/* Public reference data (groups + chapters); also used by the sign-up page before anyone is signed in. */
+/* Kept so older callers still work: groups and chapters are built in now. */
 async function loadReferenceData() {
-  const [g, c] = await Promise.all([fetchAll("groups", "*", "name"), fetchAll("chapters", "*", "name")]);
-  demoData.groups = g.map(mapGroup);
-  demoData.chapters = c.map(mapChapter);
+  demoData.groups = REFERENCE_GROUPS.map(g => ({ ...g }));
+  demoData.chapters = REFERENCE_CHAPTERS.map(c => ({ ...c }));
 }
 
 async function loadActivityPhotos(activities) {
   const byId = Object.fromEntries(activities.map(a => [a.id, a]));
   const rows = await fetchAll("activity_photos", "*", "uploaded_at");
   const items = rows.filter(r => byId[r.activity_id]);
+  if (!items.length) return;
   const urls = {};
-  for (let i = 0; i < items.length; i += 100) {
-    const chunk = items.slice(i, i + 100).map(r => r.path);
+  const chunks = [];
+  for (let i = 0; i < items.length; i += 100) chunks.push(items.slice(i, i + 100).map(r => r.path));
+  await Promise.all(chunks.map(async chunk => {
     const { data } = await getSupabase().storage.from("activity-photos").createSignedUrls(chunk, 3600);
     (data || []).forEach(d => { if (d && d.signedUrl) urls[d.path] = d.signedUrl; });
-  }
+  }));
   items.forEach(r => {
     if (!urls[r.path]) return;
     byId[r.activity_id].photos.push({ id: r.id, path: r.path, src: urls[r.path], uploadedAt: r.uploaded_at });
   });
 }
 
-/* Loads everything this person is allowed to see. Called once per page by bootPage(). */
-async function initData(profile) {
-  const sb = getSupabase();
-  const t0 = Date.now();
-  const [clock] = await Promise.all([sb.rpc("server_now"), loadReferenceData()]);
-  if (clock && clock.data) serverClockOffsetMs = new Date(clock.data).getTime() - (t0 + Date.now()) / 2;
+/* Which data sets a page loads. Cells and leaders are always loaded (they are small
+   and every page needs names); the rest are loaded only when a page asks for them,
+   which is what keeps page changes quick. */
+const ALL_DATASETS = ["members", "attendance", "firstTimers", "offerings", "activities", "photos", "reports", "clock"];
+const loadedSets = new Set(["cells", "leaders"]);
+const warnedSets = new Set();
+function needData(name) {
+  if (loadedSets.size > 2 && !loadedSets.has(name) && !warnedSets.has(name)) {
+    warnedSets.add(name);
+    console.warn("[CE] '" + name + "' was read on a page that did not ask for it, so it is empty. Add '" + name + "' to that page's bootPage needs.");
+  }
+}
 
-  const [cells, leaders, members, attendance, firstTimers, offerings, activities, reports] = await Promise.all([
+/* Loads what this person is allowed to see. needs = list of dataset names (default: everything).
+   Everything is fetched in parallel. Called once per page by bootPage(). */
+async function initData(needs) {
+  const sb = getSupabase();
+  const want = new Set(Array.isArray(needs) ? needs : ALL_DATASETS);
+  if (want.has("photos")) want.add("activities");
+  const t0 = Date.now();
+  const job = (set, table, cols, order, filter) => want.has(set) ? fetchAll(table, cols, order, filter) : Promise.resolve([]);
+
+  const [clock, cells, leaders, members, attendance, firstTimers, offerings, activities, reports] = await Promise.all([
+    want.has("clock") ? sb.rpc("server_now") : Promise.resolve(null),
     fetchAll("cells", "*", "created_at"),
     fetchAll("profiles", "id,email,full_name,phone,cell_id", "created_at", q => q.eq("role", "cell_leader")),
-    fetchAll("members", "*", "created_at"),
-    fetchAll("attendance", "*", "date"),
-    fetchAll("first_timers", "*", "week_start"),
-    fetchAll("offerings", "*", "date"),
-    fetchAll("activities", "*", "date"),
-    fetchAll("reports", "*", "submitted_at")
+    job("members", "members", "*", "created_at"),
+    job("attendance", "attendance", "*", "date"),
+    job("firstTimers", "first_timers", "*", "week_start"),
+    job("offerings", "offerings", "*", "date"),
+    job("activities", "activities", "*", "date"),
+    job("reports", "reports", "*", "submitted_at")
   ]);
+  if (clock && clock.data) serverClockOffsetMs = new Date(clock.data).getTime() - (t0 + Date.now()) / 2;
 
   demoData.cells = cells.map(mapCell);
   demoData.leaders = leaders.map(mapLeader);
@@ -173,7 +231,8 @@ async function initData(profile) {
   demoData.offerings = offerings.map(mapOffering);
   demoData.activities = activities.map(mapActivity);
   demoData.reports = reports.map(mapReport).reverse(); // newest first
-  await loadActivityPhotos(demoData.activities);
+  if (want.has("photos")) await loadActivityPhotos(demoData.activities);
+  want.forEach(n => loadedSets.add(n));
 }
 
 /* ---------- Read functions ---------- */
@@ -185,13 +244,13 @@ function getCells(chapterId) { return chapterId ? demoData.cells.filter(c => c.c
 function getCellById(cellId) { return demoData.cells.find(c => c.id === cellId) || null; }
 function getLeaders() { return demoData.leaders; }
 function getLeaderById(id) { return demoData.leaders.find(l => l.id === id) || null; }
-function getMembers(cellId) { return cellId ? demoData.members.filter(m => m.cellId === cellId) : demoData.members; }
+function getMembers(cellId) { needData("members"); return cellId ? demoData.members.filter(m => m.cellId === cellId) : demoData.members; }
 function getMemberById(id) { return demoData.members.find(m => m.id === id) || null; }
-function getAttendance(cellId) { return (cellId ? demoData.attendance.filter(a => a.cellId === cellId) : demoData.attendance).sort((a, b) => new Date(b.date) - new Date(a.date)); }
-function getOfferings(cellId) { return (cellId ? demoData.offerings.filter(o => o.cellId === cellId) : demoData.offerings).sort((a, b) => new Date(b.date) - new Date(a.date)); }
-function getActivities(cellId) { return (cellId ? demoData.activities.filter(a => a.cellId === cellId) : demoData.activities).sort((a, b) => new Date(b.date) - new Date(a.date)); }
+function getAttendance(cellId) { needData("attendance"); return (cellId ? demoData.attendance.filter(a => a.cellId === cellId) : demoData.attendance).sort((a, b) => new Date(b.date) - new Date(a.date)); }
+function getOfferings(cellId) { needData("offerings"); return (cellId ? demoData.offerings.filter(o => o.cellId === cellId) : demoData.offerings).sort((a, b) => new Date(b.date) - new Date(a.date)); }
+function getActivities(cellId) { needData("activities"); return (cellId ? demoData.activities.filter(a => a.cellId === cellId) : demoData.activities).sort((a, b) => new Date(b.date) - new Date(a.date)); }
 function getActivityById(id) { return demoData.activities.find(a => a.id === id) || null; }
-function getReports(cellId) { return cellId ? demoData.reports.filter(r => r.cellId === cellId) : demoData.reports; }
+function getReports(cellId) { needData("reports"); return cellId ? demoData.reports.filter(r => r.cellId === cellId) : demoData.reports; }
 
 /* ---------- Derived / computed ---------- */
 /* ---------- Derived / computed ---------- */

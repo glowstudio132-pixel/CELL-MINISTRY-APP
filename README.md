@@ -29,6 +29,8 @@ upload the folder, and invite your first administrator.
 | File | Purpose |
 | --- | --- |
 | `supabase/schema.sql` | Tables, security rules, storage buckets, seed groups and chapters |
+| `supabase/speed-patch.sql` | One-time speed-up for databases created with an older `schema.sql` |
+| `vercel.json` | Caching rules for Vercel hosting |
 | `supabase-config.js` | Your Supabase URL and anon key (you fill these in) |
 | `auth.js` | Sign in/up/out, Google, password reset, page bootstrap (`bootPage`) |
 | `data.js` | Loads data from Supabase into memory; reads are instant, writes are saved to the database |

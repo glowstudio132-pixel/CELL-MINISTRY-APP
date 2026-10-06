@@ -556,3 +556,5 @@ body:has(.sidebar.open) .menu-toggle span:nth-child(2) { transform: translate(-5
 /* While a page loads its data, keep the sidebar visible and hold back only the page area. */
 .main.booting > *:not(#boot-loader) { visibility: hidden; }
 .main.booting > #boot-loader { padding: 80px 24px; text-align: center; color: var(--ink-500); font-size: 14px; }
+.main.booting > #boot-loader::before { content: ""; display: block; width: 26px; height: 26px; margin: 0 auto 12px; border: 3px solid var(--line-200, #e6e8f2); border-top-color: var(--royal-600, #3346d6); border-radius: 50%; animation: boot-spin .7s linear infinite; }
+@keyframes boot-spin { to { transform: rotate(360deg); } }
