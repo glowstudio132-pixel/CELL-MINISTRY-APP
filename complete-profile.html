@@ -18,6 +18,16 @@
 <link rel="stylesheet" href="components.css">
 <link rel="stylesheet" href="responsive.css">
 <script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+<style>
+/* ===== Seamless background (fixes the visible "seam" on phones) =====
+   The page box used to end before the screen did, leaving a flat strip below it when the
+   phone's toolbars hide. The page colour now fills the whole screen and the corner glows
+   are fixed to the screen instead of the page box. */
+html { background-color: var(--paper-50); }
+body { overflow-x: clip; }
+.auth-page { min-height: 100vh; min-height: 100dvh; overflow: visible; }
+.auth-page::before, .auth-page::after { position: fixed; }
+</style>
 </head>
 <body>
 

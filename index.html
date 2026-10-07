@@ -238,6 +238,14 @@
 .site-footer .footer-top:hover { background: linear-gradient(135deg, rgba(115,134,255,.3), rgba(255,255,255,.06)); border-color: rgba(155,170,255,.5); }
 @media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; } .footer-brand { grid-column: 1 / -1; } }
 @media (max-width: 560px) { .site-footer { padding: 48px 0 24px; } .footer-bottom { flex-direction: column; align-items: flex-start; } }
+
+/* ===== Keep the page edges clean on phones =====
+   - nothing may poke out sideways (no half-cut page / sideways scrolling)
+   - the area revealed when you pull past the top/bottom matches the page, and the dark
+     footer carries on below itself so there is no light strip under it */
+html { background-color: var(--paper-50); }
+body { overflow-x: clip; }
+.site-footer { box-shadow: 0 100vh 0 0 var(--navy-950); }
 </style>
 </head>
 <body>

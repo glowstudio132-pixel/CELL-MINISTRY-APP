@@ -63,7 +63,23 @@
 .auth-page .theme-toggle:hover { transform: translateY(-2px) rotate(12deg); box-shadow: 0 12px 24px rgba(51,70,214,.2); }
 :root[data-theme="dark"] .auth-page .theme-toggle { background: rgba(255,255,255,.1) !important; border-color: rgba(255,255,255,.18) !important; }
 @media (max-width: 560px) { .back-home, .auth-page .theme-toggle { top: 16px !important; } .back-home { left: 16px; } .auth-page .theme-toggle { right: 16px !important; } .auth-card-wrap { margin-top: 48px; } }
-@media (prefers-reduced-motion: reduce) { .bg-blob, </style>
+@media (prefers-reduced-motion: reduce) { .bg-blob, 
+/* ===== Seamless background (fixes the visible "seam" on phones) =====
+   The colours used to belong to the page box, so on phones the area below the page
+   (when the browser toolbars hide) showed a flat colour. They now belong to the whole
+   screen: a fixed layer behind everything, so it always fills the viewport. */
+html { background-color: var(--paper-50); }
+body { background: transparent; overflow-x: clip; }
+body::before {
+  content: ""; position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(60% 55% at 12% 8%, color-mix(in srgb, var(--royal-500) 8%, transparent), transparent 70%),
+    radial-gradient(55% 50% at 92% 92%, color-mix(in srgb, var(--violet-500) 8%, transparent), transparent 70%),
+    linear-gradient(160deg, var(--paper-50), color-mix(in srgb, var(--royal-500) 3%, var(--paper-50)));
+}
+.auth-page { background: none; min-height: 100vh; min-height: 100dvh; overflow: visible; }
+.auth-page::before, .auth-page::after, .bg-blob { position: fixed; }
+</style>
 </head>
 <body>
 
